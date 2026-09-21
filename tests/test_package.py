@@ -32,6 +32,7 @@ class PackageTests(unittest.TestCase):
             )
             self.assertTrue((destination / "SKILL.md").is_file())
             self.assertTrue((destination / "scripts/config_summary.py").is_file())
+            self.assertTrue((destination / "scripts/pod_config_compare.py").is_file())
             self.assertFalse(any(p.name == "__pycache__" or p.suffix == ".pyc"
                                  for p in destination.rglob("*")))
             self.assertFalse(any(p.is_symlink() for p in destination.rglob("*")))

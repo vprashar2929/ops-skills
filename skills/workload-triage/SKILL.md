@@ -53,6 +53,10 @@ contexts or automatically fetch credentials. State the resolved target briefly.
   read [configuration.md](references/configuration.md). For repeated key/supplier
   checks, use [config_summary.py](scripts/config_summary.py) as described there
   to summarize named objects without emitting payload values.
+- For Deployment-template versus running-Pod configuration, follow the comparison
+  section in [configuration.md](references/configuration.md) and use
+  [pod_config_compare.py](scripts/pod_config_compare.py). Compare through the
+  Pod's owning ReplicaSet so rollout differences stay separate from Pod changes.
 - For GKE failure diagnosis, read [gke-adaptation.md](references/gke-adaptation.md)
   first, then the relevant symptom sections of the bundled
   [Google workload guide](references/google-gke-workload/guide.md).

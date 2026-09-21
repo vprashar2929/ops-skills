@@ -58,6 +58,21 @@ This verifies the cluster and lists namespace names/phases only. It does not sca
 workloads inside them. In a conversation where the profile was already supplied,
 reuse that explicit profile selection.
 
+To compare a Deployment's configured references with one running Pod:
+
+```text
+$workload-triage
+Use the client profile at /absolute/path/client-contexts/ncnp/profile.yaml.
+In dev Apps, namespace <namespace>, compare Deployment <name>'s configuration
+with one running Pod. Show additional containers, mounts and config references.
+Read-only; omit secret values.
+```
+
+The comparison verifies Deployment/ReplicaSet/Pod controller ownership by UID
+and separates current-template versus parent-template differences from observed
+Pod differences. It samples one Pod and compares wiring, not loaded values or a
+complete Pod spec. It does not automatically attribute differences to an injector.
+
 Misspelled namespaces, resource kinds (including custom resources), object names,
 containers and requested keys/fields use scoped discovery to suggest real
 candidates. The skill confirms a changed target before inspecting it; valid

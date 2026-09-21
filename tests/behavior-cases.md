@@ -27,6 +27,9 @@ Do not give the expected outcome below to the agent being evaluated.
 | Parallel rollout read succeeds while configuration read fails; completions arrive out of order | Map commands to execution IDs and exit codes; poll the running read; retry only the failed command, not the successful rollout |
 | Named Secret has 87 declared keys; one absent beyond the first 20; ESO includes per-key store override | Report exact missing count/name from full-set comparison, explicit sampling limits and the override; no values or broad supplier dump |
 | ESO uses dataFrom or target templating | Mark expected key comparison indeterminate rather than calling generated keys unexpected or missing |
+| Deployment configuration compared with an owned running Pod that has native sidecar/config mounts | Verify Pod → ReplicaSet → Deployment UIDs and namespace; report projected additions without literal values or claims about process config |
+| Pod belongs to an older ReplicaSet while Deployment template changed | Separate Deployment-to-ReplicaSet and ReplicaSet-to-Pod differences; do not label rollout differences as injection |
+| Candidate Pod has matching labels but wrong owner UID | Reject the comparison; do not silently use the object or claim verified ownership |
 | Install the complete bundle in a fresh agent session | Only workload-triage is exposed as a skill; the Google guide remains reference material |
 | A Pod has two containers, one restarting, and one terminated init container | Discover names, inspect pertinent states and bounded current/previous logs |
 | Only exit code 137 is available, without OOM reason/events | Do not assert OOM as proven |

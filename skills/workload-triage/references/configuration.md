@@ -78,6 +78,65 @@ for the question. Label Deployment-template observations explicitly; they do not
 cover admission-injected Pod configuration. If the helper fails, preserve its
 failure and narrow the query; never fall back to printing the raw input.
 
+## Deployment-template versus running-Pod configuration
+
+Use this comparison when asked about effective/deployed Pod configuration or
+injected containers/mounts, or when diagnosis needs that distinction. A simple
+Deployment spec lookup does not need Pod sampling. This workflow initially
+supports Deployment → ReplicaSet → Pod; do not invent that chain for other kinds.
+
+1. Resolve and verify the target using targeting.md. Read Deployment identity,
+   selector and revision using projections. Select a small Pod sample using the
+   actual selector (including matchExpressions). Prefer one non-terminating
+   Running Pod from the current ReplicaSet; if the operator names a Pod, use it.
+   List only identity, controller owner references, phase/start/deletion times for
+   selection. If none is Running, report that gap; do not call a pending/terminated
+   Pod a running sample. Mixed revisions may warrant one sample per relevant
+   ReplicaSet, separately labelled. One Pod is not evidence for every replica.
+2. Follow the selected Pod's controller owner to the named ReplicaSet, then verify
+   that ReplicaSet's controller owner against the Deployment. Compare names,
+   UIDs, API versions and namespace; selectors or matching names alone are not
+   proof. Do not silently substitute a different Pod after deletion/owner mismatch.
+3. Pipe the three **named API objects** directly into the bundled Python 3 helper:
+
+```bash
+set -o pipefail
+kubectl --context "$context" --namespace "$namespace" --request-timeout=20s \
+  get "deployment/$deployment" "replicaset/$replica_set" "pod/$pod" -o json | \
+  python3 "$skill_dir/scripts/pod_config_compare.py"
+```
+
+Never display or persist the raw objects: templates/Pods may hold literal secrets.
+The helper performs no API calls, validates the controller owner chain, and emits
+only projected reference differences. It compares containers, init containers
+(including restartPolicy=Always sidecars), ephemeral containers, ordered env and
+envFrom references/prefixes, mounts/subPath, configuration volumes, service
+account and imagePullSecret names. It includes projected Secret/ConfigMap,
+service-account-token and downward-API references, plus CSI driver,
+nodePublishSecretRef and secretProviderClass. Unsupported volume/source kinds are
+marked detailsNotCompared and listed in coverageGaps even when their markers
+match. Always report material coverage gaps alongside zero-difference results.
+Token contents, arbitrary CSI attributes, literal env
+values, arguments, annotations, image/resources and process state are excluded.
+
+Read the two results separately: deploymentToReplicaSet describes differences
+from the **current** desired template to this Pod's parent template;
+replicaSetToPod describes differences between that parent and the actual Pod.
+Use returned revision/identity/timestamps to contextualize an older rollout.
+Neither diff proves which webhook/injector caused a change; defaults, admission,
+controller behavior and later Pod updates can contribute. Describe new containers
+as observed additions; attribute Istio or another injector only with supporting
+evidence. Exact ConfigMap/Secret dependencies discovered here may be inspected
+with the existing key/supplier workflow when relevant, without retrieving values.
+
+Output defaults to 50 leaf changes **per comparison** and 50 coverage-gap paths
+per object, with exact count and
+remaining. For omitted differences, repeat with --offset and --limit (maximum
+200); record the returned resourceVersions and do not combine pages as one
+snapshot if objects changed. No differences means only that the projected wiring
+matches; it does not prove literal values, mounted content or the process's
+configuration match. No exec, debug container or mutation is part of this check.
+
 ## External Secrets Operator, when present
 
 Discover served `external-secrets.io` resources rather than hardcoding `v1` or
