@@ -29,6 +29,55 @@ container starts. Mounted data updates have different behavior; subPath mounts
 do not receive those updates and applications may cache config. A changed API
 object does not prove that an existing process loaded the new content.
 
+## Compact key and synchronization summary
+
+For repeated key/supplier checks, use the bundled Python 3 helper
+`scripts/config_summary.py` (path relative to the skill directory). It accepts
+only Secret, ConfigMap, ExternalSecret, or a List of those named objects on stdin;
+it makes no network calls. Pipe API output directly into it without printing or
+saving raw objects. Like kubectl's key-only template, it receives the object
+including data locally but emits only allowlisted reference metadata and key
+names. It is not a metadata-only API permission or a general log redactor.
+
+```bash
+set -o pipefail
+kubectl --context "$context" --namespace "$namespace" --request-timeout=20s \
+  get "secret/$secret" -o json | python3 "$skill_dir/scripts/config_summary.py"
+```
+
+Follow the Secret's ExternalSecret owner reference first, verifying the owner UID
+when supplied. If no such owner exists, do not assume the supplier shares its
+name: use known delivery metadata, or a namespace-scoped projection of supplier
+names and target names only. Once the supplier is identified and its API served,
+summarize the two named resources together:
+
+```bash
+set -o pipefail
+kubectl --context "$context" --namespace "$namespace" --request-timeout=20s \
+  get "secret/$secret" "externalsecrets.external-secrets.io/$external_secret" \
+  -o json | python3 "$skill_dir/scripts/config_summary.py"
+```
+
+The summary counts all keys, samples at most 20 names per set and 20 distinct
+stores (including per-key overrides), and compares explicit output keys with the matching target
+Secret in the same namespace. Missing/extra sets are computed before sampling;
+`omitted` reports hidden names. Use `--key "$key"` for one requested key's source
+reference/version and presence. An absent remote version is reported as null,
+not inferred to be a verified current source version. `dataFrom` or target
+templating makes the expected key set indeterminate; the helper skips that
+comparison. Extra keys alone do not establish failure (for example Merge policy).
+Do not mistake the declared supplier mapping for proof of last successful sync.
+For offline Secret manifests, `stringData` key names are included; manifest keys
+are declarations, not evidence of what exists in a cluster. Sampled lists do not
+establish absence or lack of overlap: use full-set counts/comparisons or an exact
+`--key` query for omitted names.
+
+This summary does not trace container precedence, mounted values, provider auth,
+or actual process configuration. Inspect only the additional references needed
+for the question. Label Deployment-template observations explicitly; they do not
+cover admission-injected Pod configuration. If the helper fails, preserve its
+failure and narrow the query; never fall back to printing the raw input.
+
 ## External Secrets Operator, when present
 
 Discover served `external-secrets.io` resources rather than hardcoding `v1` or

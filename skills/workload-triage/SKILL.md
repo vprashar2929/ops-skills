@@ -83,6 +83,16 @@ that pipes kubectl/gcloud/Helm output through jq or another filter, enable
 exit status before parsing. Inspect exit status and stderr; an empty result from
 a failed read is not a successful lookup. See the example in targeting.md.
 
+Keep each collection result attached to its exact command, target, UTC observation
+time, tool execution/session ID, exit status, and any truncation. For parallel
+calls, label results when submitting/collecting them; do not infer command identity
+from completion order. A running session has no final exit status: poll that same
+session before interpreting or retrying it. Retry only the identified failed read,
+under the tool's approval rules; do not repeat a successful sibling command.
+Pending or cancelled approval is an uncollected result, not a cluster failure.
+Keep this bookkeeping in the working evidence; a narrow answer needs only the
+requested result and material gaps, not a full command ledger.
+
 Keep secret payloads out of tool output and artifacts: query metadata and key
 names, not Secret YAML/JSON or decoded values. Configuration and logs can also
 contain credentials or personal data. Project only needed fields, use established

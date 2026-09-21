@@ -10,6 +10,9 @@ Prerequisites: Git, Python 3.9+ for packaging; kubectl plus appropriate identity
 network access for use. GKE identity verification needs gcloud. Helm and jq are
 optional, used only for relevant inspections. Runtime profile YAML is read by the
 agent; no Python/YAML runtime package is required.
+The optional compact configuration helper uses Python 3's standard library to
+summarize named Secret/ConfigMap/ExternalSecret reads; it performs no API calls
+and emits key/reference metadata rather than values.
 
 ```bash
 git submodule update --init --recursive
@@ -107,11 +110,22 @@ preserved upstream content, refusal of local upstream edits/revision mismatch,
 and no destination overwrite. Command tests execute the documented pipefail
 example with a fake kubectl and real jq, covering failed collection, successful
 projection and invalid JSON; these tests need bash and jq and otherwise skip.
+Configuration-helper tests cover value exclusion, full-set missing/extra key
+comparisons before sampling, namespace isolation, per-key store overrides,
+indeterminate templated/dataFrom output, local stringData keys, malformed key
+maps, and large store sets. The helper and its tests use only Python's standard
+library. Packaging omits generated Python bytecode.
 The initial 2026-09-21 bundle passed frontmatter and reference checks. A subsequent
 Codex trial successfully inspected a live deployment and a bounded log sample;
 it exposed nested skill discovery and masked pipeline failures, addressed by
 these packaging and command-guidance corrections. This does not establish that
-every agent-generated command will follow the guidance; repeat the live trial.
+every agent-generated command will follow the guidance. Follow-up independent
+Codex trials on 2026-09-21 exercised live configuration tracing, typo-confirmation
+boundaries, and an offline second-client failure case. The local layer now keeps
+command/session/exit results associated and offers compact named configuration
+summaries. Independent helper review found malformed-input, stringData and large
+store-list edge cases; those have regression tests. These trials do not establish
+cross-agent parity or coverage of all live failure modes.
 Profile YAML and local kubeconfig mappings were checked separately. Renovate
 configuration has been checked for JSON syntax, not tested with a connected bot.
 `tests/behavior-cases.md` defines the next behavioral checks. Frontmatter and

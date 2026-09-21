@@ -56,7 +56,7 @@ def package(destination, root=ROOT):
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".workload-skill-", dir=destination.parent) as temporary:
         staged = Path(temporary) / "workload-triage"
-        shutil.copytree(source_skill, staged)
+        shutil.copytree(source_skill, staged, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         vendor = staged / "references/google-gke-workload"
         shutil.copytree(selected, vendor)
         # Keep upstream bytes intact without registering another selectable skill.
