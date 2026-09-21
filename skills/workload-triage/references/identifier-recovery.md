@@ -98,8 +98,8 @@ API group when relevant. Do not assert the closest string is the intended object
 If none is plausible, say so; for a small set offer the actual names, otherwise
 ask for a distinguishing prefix. Do not cycle through guessed object reads.
 
-Example: “Deployment `ces-disclosur` was not found in `compliance-assessment-dev`.
-That namespace contains Deployment `ces-disclosure`. Should I inspect it?”
+Example: “Deployment `orders-ap` was not found in `orders-staging`.
+That namespace contains Deployment `orders-api`. Should I inspect it?”
 
 Even one plausible match needs confirmation before changing the target. If the
 user's current request already explicitly selects the exact corrected target,
