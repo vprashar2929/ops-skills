@@ -1,7 +1,7 @@
 # Operational skills pilot
 
-One portable `workload-triage` skill for scoped Kubernetes inspection and incident
-investigation. Client profiles live separately. Native kubectl/gcloud/Helm provide
+One portable `workload-triage` skill for namespace listing, scoped Kubernetes
+inspection and incident investigation. Client profiles live separately. Native kubectl/gcloud/Helm provide
 the evidence; there is no observe dependency or collection framework.
 
 ## Assemble and try it
@@ -42,6 +42,18 @@ Show its images, requests/limits, readiness and rollout state. Read-only.
 For incident testing, replace the last line with the symptom and UTC incident
 window. Do not change a shared environment to manufacture an incident. The first
 live case should be one named dev/test workload chosen by the operator.
+
+Once installed, namespace discovery can be invoked without a namespace or workload:
+
+```text
+$workload-triage
+Use the client profile at /absolute/path/client-contexts/ncnp/profile.yaml.
+List namespaces in the dev Apps cluster, with their status.
+```
+
+This verifies the cluster and lists namespace names/phases only. It does not scan
+workloads inside them. In a conversation where the profile was already supplied,
+reuse that explicit profile selection.
 
 Install the complete assembled `workload-triage` directory using the target
 agent's supported skill installation mechanism when ready. Copying only SKILL.md

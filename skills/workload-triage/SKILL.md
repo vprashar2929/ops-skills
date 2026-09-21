@@ -1,6 +1,6 @@
 ---
 name: workload-triage
-description: Inspect Kubernetes workload configuration or investigate failed rollouts, restarts, logs, events, and ConfigMap or Secret wiring using an explicitly supplied client profile. Use for a named workload or scoped workload discovery; return evidence and proposed next steps without changing the environment.
+description: List Kubernetes namespaces, inspect workload configuration, or investigate failed rollouts, restarts, logs, events, and ConfigMap or Secret wiring using an explicitly supplied client profile. Use for cluster namespace discovery or scoped workload inspection; return evidence and proposed next steps without changing the environment.
 ---
 
 # Workload triage
@@ -11,9 +11,11 @@ key names needs a focused inspection, not a full incident investigation.
 ## Resolve the target
 
 Read the explicitly supplied client profile and
-[targeting.md](references/targeting.md) before contacting a cluster. Resolve
-environment, cluster, namespace, workload kind/name, and any incident time window
-from the request. A profile supplies mappings and context, not authorization.
+[targeting.md](references/targeting.md) before contacting a cluster. For namespace
+listing, resolve the client, environment and cluster; no namespace or workload
+is required. For workload inspection, also resolve namespace, workload kind/name,
+and any incident time window from the request. A profile supplies mappings and
+context, not authorization.
 Do not pick a client from the working directory or reuse another client's profile.
 
 Require an explicit namespace for workload queries; do not default to `default`.
@@ -23,12 +25,16 @@ that missing input before dependent reads. A profile can be supplied as a file
 or its complete contents in the request.
 
 Verify the kubeconfig server against the intended cluster's identity before
-workload reads. Always include the resolved `--context` and `--namespace` in
+cluster resource reads, including namespace listing. Always include the resolved `--context` and `--namespace` in
 namespaced kubectl calls, and `--project` in gcloud calls. Do not switch global
 contexts or automatically fetch credentials. State the resolved target briefly.
 
 ## Investigate only what the question needs
 
+- For namespace listing, follow the namespace discovery section in
+  [targeting.md](references/targeting.md). Return names and status from the verified
+  cluster without inspecting resources inside those namespaces or asking the
+  operator to select a workload.
 - For controller/Pod state, rollout, events, and logs, read
   [workloads.md](references/workloads.md).
 - For environment variables, ConfigMaps, Secrets, mounts, and ExternalSecrets,

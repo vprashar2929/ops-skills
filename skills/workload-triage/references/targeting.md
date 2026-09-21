@@ -24,8 +24,9 @@ references:
 
 Environment names are exact keys: do not silently translate `stage`, `nprod`,
 `nprd`, or `prod`. Do not infer an environment from a Git branch. The request
-chooses the namespace and workload; profiles should not default every workload
-to one namespace. Unknown profile versions require clarification, not guessing.
+chooses the namespace and workload for workload inspection; namespace listing
+requires neither. Profiles should not default every workload to one namespace.
+Unknown profile versions require clarification, not guessing.
 Missing optional conventions do not prevent ordinary Kubernetes inspection.
 
 ## Identity verification
@@ -67,6 +68,30 @@ Use `--request-timeout=20s` on Kubernetes API reads. For logs use finite
 `--pod-running-timeout=10s`, a finite request timeout, and no follow mode.
 Use the execution tool's timeout for cloud calls. Do not replace a failed read
 with a wider all-project/all-namespace scan.
+
+## Namespace discovery
+
+For a request such as “list namespaces in dev Apps,” resolve the explicit client
+profile, environment and cluster, then perform the identity verification above.
+Do not ask for a namespace or workload: Namespace is a cluster-scoped resource.
+List namespace names and phases with a finite timeout and explicit context:
+
+```bash
+kubectl --context "$context" --request-timeout=20s get namespaces \
+  --sort-by=.metadata.name \
+  -o 'custom-columns=NAME:.metadata.name,STATUS:.status.phase'
+```
+
+Do not add `--namespace` or `--all-namespaces` to this command. Return the table
+with the resolved client/environment/cluster and observation time. Include system
+namespaces unless the user requests a narrower list; state any applied filter.
+An Active namespace does not establish the health of its workloads.
+
+If listing is forbidden or fails, report the access/query gap, not an empty list.
+Do not enumerate Pods, Deployments, ConfigMaps or Secrets to work around missing
+namespace-list permission or enrich a namespace-only request. If the user later
+asks to inspect a workload, obtain or reuse their explicit namespace selection;
+do not pick a namespace from the list automatically.
 
 ## Preserve command failures
 
