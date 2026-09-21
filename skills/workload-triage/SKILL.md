@@ -65,6 +65,12 @@ Use finite request timeouts. On access denial or persistent connectivity failure
 record the gap and stop equivalent retries; an inaccessible API is not evidence
 that the workload is unhealthy. Do not infer a root cause from symptoms alone.
 
+Preserve collection failures when filtering output. In each shell invocation
+that pipes kubectl/gcloud/Helm output through jq or another filter, enable
+`set -o pipefail` before the pipeline, or explicitly check the collection process's
+exit status before parsing. Inspect exit status and stderr; an empty result from
+a failed read is not a successful lookup. See the example in targeting.md.
+
 Keep secret payloads out of tool output and artifacts: query metadata and key
 names, not Secret YAML/JSON or decoded values. Configuration and logs can also
 contain credentials or personal data. Project only needed fields, use established

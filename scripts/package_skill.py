@@ -59,6 +59,12 @@ def package(destination, root=ROOT):
         shutil.copytree(source_skill, staged)
         vendor = staged / "references/google-gke-workload"
         shutil.copytree(selected, vendor)
+        # Keep upstream bytes intact without registering another selectable skill.
+        (vendor / "SKILL.md").rename(vendor / "guide.md")
+        entrypoints = [p.relative_to(staged) for p in staged.rglob("*")
+                       if p.name.lower() == "skill.md"]
+        if entrypoints != [Path("SKILL.md")]:
+            raise ValueError("Bundle must expose only the workload-triage SKILL.md; review nested entrypoints")
         shutil.copy2(submodule / "LICENSE", vendor / "LICENSE")
         if (submodule / "NOTICE").is_file():
             shutil.copy2(submodule / "NOTICE", vendor / "NOTICE")
@@ -67,6 +73,7 @@ def package(destination, root=ROOT):
             "revision": revision,
             "path": SELECTED,
             "modified": False,
+            "entrypoint_mapping": {"SKILL.md": "guide.md"},
         }, indent=2) + "\n")
         # Recheck before publishing so an existing installation is not overwritten.
         if destination.exists() or destination.is_symlink():

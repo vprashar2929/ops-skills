@@ -20,11 +20,16 @@ class PackageTests(unittest.TestCase):
             destination = module.package(Path(temporary) / "workload-triage")
             vendor = destination / "references/google-gke-workload"
             upstream = ROOT / module.SUBMODULE
-            self.assertEqual((vendor / "SKILL.md").read_bytes(), (upstream / module.SELECTED / "SKILL.md").read_bytes())
+            self.assertEqual((vendor / "guide.md").read_bytes(), (upstream / module.SELECTED / "SKILL.md").read_bytes())
             self.assertEqual((vendor / "LICENSE").read_bytes(), (upstream / "LICENSE").read_bytes())
             metadata = json.loads((vendor / "UPSTREAM.json").read_text())
             self.assertEqual(metadata["revision"], module.git(upstream, "rev-parse", "HEAD"))
             self.assertFalse(metadata["modified"])
+            self.assertEqual(metadata["entrypoint_mapping"], {"SKILL.md": "guide.md"})
+            self.assertEqual(
+                [p.relative_to(destination) for p in destination.rglob("*") if p.name.lower() == "skill.md"],
+                [Path("SKILL.md")],
+            )
             self.assertTrue((destination / "SKILL.md").is_file())
             self.assertFalse(any(p.is_symlink() for p in destination.rglob("*")))
             self.assertFalse(any(p.name == "profile.yaml" for p in destination.rglob("*")))

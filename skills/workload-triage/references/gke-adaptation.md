@@ -1,8 +1,9 @@
 # How the Google reference is used
 
 For GKE failure diagnosis, read the relevant symptom sections in
-[Google's workload troubleshooting skill](google-gke-workload/SKILL.md).
-The packaged copy is unchanged and carries its upstream license and revision in
+[Google's workload troubleshooting guide](google-gke-workload/guide.md).
+The upstream content is unchanged; its packaged filename is `guide.md` to avoid
+registering a second skill. It carries its upstream license and revision in
 `google-gke-workload/`. It is supporting reference material for this skill, not
 a second automatically invoked workflow. Read this adaptation before its steps.
 

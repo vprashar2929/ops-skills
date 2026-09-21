@@ -67,3 +67,24 @@ Use `--request-timeout=20s` on Kubernetes API reads. For logs use finite
 `--pod-running-timeout=10s`, a finite request timeout, and no follow mode.
 Use the execution tool's timeout for cloud calls. Do not replace a failed read
 with a wider all-project/all-namespace scan.
+
+## Preserve command failures
+
+Shell pipelines can return the filter's success status even when collection
+fails. Set pipefail in the same shell invocation as the pipeline; setting it in
+an earlier tool call does not carry over. For example, after resolving the target:
+
+```bash
+set -o pipefail
+kubectl --context "$context" --namespace "$namespace" --request-timeout=20s \
+  get "$workload" -o json |
+  jq '{name: .metadata.name, readyReplicas: .status.readyReplicas}'
+```
+
+Inspect that command's exit status and stderr before interpreting the result.
+Do not append a successful command that hides the pipeline's status, suppress
+errors with `|| true`, or merge stderr into JSON input. A shell without pipefail
+needs separate collection/processing with an explicit collection-status check.
+Authentication failures, timeouts and NotFound must remain failed reads even if
+the filter accepts empty input. An empty successful list is a different result;
+state its actual query scope before drawing conclusions.

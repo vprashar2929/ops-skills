@@ -21,6 +21,9 @@ Run from this repository. The destination must not exist; for another build choo
 a new output directory. The packager copies only our skill and the selected Google
 workload skill with its required resources, license and SHA. It refuses a dirty
 or unrecorded upstream revision. Do not install the entire upstream skill catalog.
+The upstream entrypoint is packaged as `guide.md`, with unchanged contents and a
+filename mapping in `UPSTREAM.json`. Packaging rejects any additional `SKILL.md`
+entrypoint so the reference is not independently discoverable as a skill.
 
 To test without changing agent settings, paste a request like this into an agent
 that can read local files and run the needed tools, replacing paths and workload:
@@ -80,10 +83,16 @@ revision and initialize its recorded submodule, then rebuild/reinstall its bundl
 
 ## Validation status
 
-Packaging tests exercise a self-contained bundle, preserved upstream content,
-refusal of local upstream edits/revision mismatch, and no destination overwrite.
-On 2026-09-21 both packaging tests passed; the assembled skill passed the
-skill-creator frontmatter validator and its local Markdown references resolved.
+Packaging tests exercise a self-contained bundle with one skill entrypoint,
+preserved upstream content, refusal of local upstream edits/revision mismatch,
+and no destination overwrite. Command tests execute the documented pipefail
+example with a fake kubectl and real jq, covering failed collection, successful
+projection and invalid JSON; these tests need bash and jq and otherwise skip.
+The initial 2026-09-21 bundle passed frontmatter and reference checks. A subsequent
+Codex trial successfully inspected a live deployment and a bounded log sample;
+it exposed nested skill discovery and masked pipeline failures, addressed by
+these packaging and command-guidance corrections. This does not establish that
+every agent-generated command will follow the guidance; repeat the live trial.
 Profile YAML and local kubeconfig mappings were checked separately. Renovate
 configuration has been checked for JSON syntax, not tested with a connected bot.
 `tests/behavior-cases.md` defines the next behavioral checks. Frontmatter and
