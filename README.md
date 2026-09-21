@@ -1,8 +1,28 @@
-# Operational skills pilot
+# Portable operational skills
 
-One portable `workload-triage` skill for namespace listing, scoped Kubernetes
-inspection and incident investigation. Client profiles live separately. Native kubectl/gcloud/Helm provide
-the evidence; there is no observe dependency or collection framework.
+Nine portable skills for scoped operational inspection and investigation. Client
+profiles live separately. Native tools and existing monitoring APIs provide the
+evidence; there is no observe dependency or collection framework. New skills are
+pilots with focused offline and live DEV validation, not a claim of complete incident or
+cross-agent coverage.
+
+| Skill | Use it for | Inputs beyond the explicit client/environment |
+| --- | --- | --- |
+| workload-triage | Namespace/resource discovery, workload status/logs/config wiring | Cluster; namespace/workload for inspection |
+| service-connectivity-triage | Service endpoints, network policies and Istio path failures | Cluster, source and destination, protocol/port/window |
+| gke-cluster-triage | Nodes, capacity/autoscaler and volume failures | Cluster and relevant node/pool or PVC/Pod |
+| observability-triage | Missing metrics/logs, scrape and alert evidence | Signal/resource/window and verified backend/scope |
+| delivery-triage | Pipeline, Helm and Argo revision/ownership failures | Run/artifact, release or Application; actual management/destination mapping |
+| cloud-sql-triage | Cloud SQL state, operations, connections and capacity evidence | Exact project/instance/window; no database session required |
+| redis-triage | Memorystore/self-managed Redis connection/memory/replication evidence | Product type, resource/project/region or verified Kubernetes target |
+| cloud-cost-review | Billing totals, change analysis and supported GKE allocation | Export table, projects, period/basis/location and execution byte ceiling for live queries |
+| kafka-triage | Managed/self-managed Kafka, consumer lag and Connect/MirrorMaker | Cluster and affected topic/group/connector/task/window |
+
+Each skill diagnoses and proposes next steps without changing the environment.
+Profiles, permissions, network access and tool availability are still required
+for live evidence. Supplied offline artifacts can be analyzed without live access.
+Missing service identifiers, billing exports and monitoring/Argo endpoints are
+requested when needed; they are not guessed or embedded in the public packages.
 
 ## Assemble and try it
 
@@ -20,12 +40,25 @@ python3 -m unittest discover -s tests -v
 python3 scripts/package_skill.py dist/workload-triage
 ```
 
-Run from this repository. The destination must not exist; for another build choose
-a new output directory. The packager copies only our skill and the selected Google
-workload skill with its required resources, license and SHA. It refuses a dirty
-or unrecorded upstream revision. Do not install the entire upstream skill catalog.
-The upstream entrypoint is packaged as `guide.md`, with unchanged contents and a
-filename mapping in `UPSTREAM.json`. Packaging rejects any additional `SKILL.md`
+Run from this repository. The destination must not exist and its leaf must match
+the skill name; for another build use e.g. dist/trial-2/workload-triage. Select a
+different skill with `--skill`, or build the collection into a new versioned folder:
+
+```bash
+for skill in workload-triage service-connectivity-triage gke-cluster-triage \
+  observability-triage delivery-triage cloud-sql-triage redis-triage \
+  cloud-cost-review kafka-triage; do
+  python3 scripts/package_skill.py --skill "$skill" "dist/my-trial/$skill" || exit 1
+done
+```
+
+The packager copies each skill and its explicit selected upstream directories/files,
+required resources, license and SHA. It rejects dirty/unrecorded upstream
+revisions, unresolved local Markdown links and symlinks. It does not fetch anything
+at runtime. Do not install the entire upstream skill catalog.
+Included upstream entrypoints are packaged as `guide.md`, with unchanged contents
+and a filename mapping in `UPSTREAM.json`. Reference-only selections instead list
+their included files in that provenance record. Packaging rejects any additional `SKILL.md`
 entrypoint so the reference is not independently discoverable as a skill.
 
 To test without changing agent settings, paste a request like this into an agent
@@ -86,6 +119,21 @@ loses references. Direct file invocation is the pilot path; automatic discovery
 and Claude/Codex behavioral parity still need testing. Instruction portability
 does not supply cloud permissions, network access, or tool enforcement.
 
+Install each additional assembled directory in the same way. For example, once
+installed, an end user can invoke:
+
+```text
+$service-connectivity-triage
+Use /absolute/path/client-contexts/example/profile.yaml, staging Apps.
+Investigate 503s from deployment/frontend in shop to service/orders:8080 in shop
+over the last 30 minutes. Read-only.
+```
+
+The same explicit profile selection can be reused within the conversation.
+Each package has its own operational reference so it works independently of the
+other installed skills. When changing common targeting/evidence rules, update
+the affected copies together; avoid introducing a runtime profile registry.
+
 ## Client profiles
 
 See `skills/workload-triage/references/targeting.md` for the small profile contract.
@@ -97,14 +145,41 @@ The separate local NCNP profile currently covers dev/test/nprd Apps and BFF;
 production is deliberately absent from this initial pilot. Repository conventions
 are hints verified against the actual workload/run before use. A different local
 context alias can be supplied if it verifies against the same cluster endpoint.
+New skills document their contract in `references/operations.md`. Managed GCP
+skills accept provider gcp as well as a GKE client's project mapping; they do not
+require a Kubernetes target when only cloud service evidence is needed. Backend,
+billing and management-project mappings may be supplied explicitly in the request
+or maintained private conventions. A fully qualified resource ID must agree with
+that scope before a request is sent. No existing NCNP profile was broadened to
+production or populated with guessed service/backend identifiers.
 
 ## Upstream maintenance
 
 `upstream/google-skills` is an unmodified Git submodule of
-[google/skills](https://github.com/google/skills), Apache-2.0. The only selected
-skill is `skills/cloud/gke-workload-troubleshooting`. Its commit is recorded by
-the parent gitlink; `branch = main` selects the update source, not a floating
-runtime version. Local adaptations live in `references/gke-adaptation.md`.
+[google/skills](https://github.com/google/skills), Apache-2.0.
+`upstream/redis-skills` is an unmodified Git submodule of
+[redis/agent-skills](https://github.com/redis/agent-skills), MIT.
+`upstream/wshobson-agents` is an unmodified Git submodule of
+[wshobson/agents](https://github.com/wshobson/agents), MIT; only its Istio traffic
+and mesh-observability guides are packaged into the two existing triage skills.
+`upstream/planetscale-database-skills` is an unmodified Git submodule of
+[planetscale/database-skills](https://github.com/planetscale/database-skills), MIT;
+five MySQL diagnostic references support only the MySQL branch of cloud-sql-triage.
+Its provider-oriented entrypoint, schema-design material and other engines are
+excluded.
+Each commit is recorded by its parent gitlink; `branch = main` selects the update
+source, not a floating runtime version. `scripts/package_skill.py` contains the
+small explicit source/path selection for each skill. Google supports GKE,
+monitoring and cost guidance; Redis supports three Redis diagnostic references.
+Delivery/Kafka currently use locally authored procedures and linked primary docs.
+Selected content is defined in the packager; adaptations live in each skill's
+entrypoint and references. No extra skill entrypoints or community plugin runtime
+are installed.
+
+Operational adaptations live in our entrypoints/references; upstream bytes are
+preserved. Their setup, active-context, mutation or automatic MCP configuration
+instructions do not override our scope. The source review is not a promise that
+upstream examples are universally correct or maintained for every model.
 
 `renovate.json` enables weekly, non-automerge submodule PRs. The
 [Renovate submodule manager](https://docs.renovatebot.com/modules/manager/git-submodules/)
@@ -125,29 +200,25 @@ including official Agent Skills validation of source, assembled and updated
 installed bundles. These checks are currently performed manually; no connected
 CI release gate is claimed.
 
-Packaging tests exercise a self-contained bundle with one skill entrypoint,
-preserved upstream content, refusal of local upstream edits/revision mismatch,
-and no destination overwrite. Command tests execute the documented pipefail
-example with a fake kubectl and real jq, covering failed collection, successful
-projection and invalid JSON; these tests need bash and jq and otherwise skip.
-Configuration-helper tests cover value exclusion, full-set missing/extra key
-comparisons before sampling, namespace isolation, per-key store overrides,
-indeterminate templated/dataFrom output, local stringData keys, malformed key
-maps, and large store sets. The helper and its tests use only Python's standard
-library. Packaging omits generated Python bytecode.
-The initial 2026-09-21 bundle passed frontmatter and reference checks. A subsequent
-Codex trial successfully inspected a live deployment and a bounded log sample;
-it exposed nested skill discovery and masked pipeline failures, addressed by
-these packaging and command-guidance corrections. This does not establish that
-every agent-generated command will follow the guidance. Follow-up independent
-Codex trials on 2026-09-21 exercised live configuration tracing, typo-confirmation
-boundaries, and an offline second-client failure case. The local layer now keeps
-command/session/exit results associated and offers compact named configuration
-summaries. Independent helper review found malformed-input, stringData and large
-store-list edge cases; those have regression tests. These trials do not establish
-cross-agent parity or coverage of all live failure modes.
-Profile YAML and local kubeconfig mappings were checked separately. Renovate
-configuration has been checked for JSON syntax, not tested with a connected bot.
-`tests/behavior-cases.md` defines the next behavioral checks. Frontmatter and
-packaging checks are preparation, not evidence of live diagnostic effectiveness.
-Keep this a pilot until real workload and cross-agent results support release.
+As of 2026-09-21, all 27 automated tests passed without skips. They cover packaging,
+upstream preservation, reference resolution, command-failure propagation and
+value-free configuration comparisons. Command tests require bash and jq; they
+skip when those tools are unavailable. Official validation passed for all nine
+source, assembled and installed skills, and installed contents matched fresh builds.
+
+Reusable offline cases remain in [operational scenarios](tests/fixtures/operational-scenarios.md),
+[mesh scenarios](tests/fixtures/community-mesh-scenarios.md) and
+[MySQL scenarios](tests/fixtures/mysql-reference-scenarios.md).
+[Workload behavior cases](tests/behavior-cases.md) cover further targeted checks.
+Development reports, installation manifests and private live evidence are kept
+outside this repository.
+
+Scoped DEV trials exercised representative workload, network, cluster, monitoring,
+delivery and managed-service paths. A matched-evidence comparison found equivalent
+diagnostic conclusions with and without skills, with extra reading time in the
+skill arm; it did not measure independent collection or incident-resolution time.
+
+This remains a pilot. Broader incident coverage, teammate/Claude trials and live
+MySQL behavior remain unverified. Renovate configuration has not been tested with
+a connected bot. Passing format and packaging checks does not establish runtime
+enforcement, cross-agent parity or diagnostic effectiveness.

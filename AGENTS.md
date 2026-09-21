@@ -2,7 +2,7 @@
 
 Every skill change in this repository must follow the current
 [Agent Skills specification](https://agentskills.io/specification). Check the
-official specification and relevant authoring guidance when changing the format
+official specification and [skill creation best practices](https://agentskills.io/skill-creation/best-practices) when changing the format
 or workflow; distinguish required fields from optional recommendations.
 
 Before declaring a skill change complete:

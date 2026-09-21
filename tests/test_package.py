@@ -15,6 +15,68 @@ spec.loader.exec_module(module)
 
 
 class PackageTests(unittest.TestCase):
+    def test_all_skills_preserve_selected_sources_and_resolve_links(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            for skill, selections in module.SKILLS.items():
+                with self.subTest(skill=skill):
+                    bundle = module.package(Path(temporary) / skill, skill=skill)
+                    self.assertEqual([p.relative_to(bundle) for p in bundle.rglob("SKILL.md")],
+                                     [Path("SKILL.md")])
+                    module.check_links(bundle)
+                    for label, path, selected in selections:
+                        upstream = ROOT / path
+                        vendor = bundle / "references" / label
+                        metadata = json.loads((vendor / "UPSTREAM.json").read_text())
+                        self.assertEqual(metadata["revision"], module.git(upstream, "rev-parse", "HEAD"))
+                        self.assertEqual(metadata["path"], selected)
+                        self.assertEqual((vendor / "LICENSE").read_bytes(), (upstream / "LICENSE").read_bytes())
+                        for source in (upstream / selected).rglob("*"):
+                            if source.is_file():
+                                relative = source.relative_to(upstream / selected)
+                                if "included_files" in metadata and str(relative) not in metadata["included_files"]:
+                                    continue
+                                target = vendor / ("guide.md" if str(relative) == "SKILL.md" else relative)
+                                self.assertEqual(target.read_bytes(), source.read_bytes())
+
+    def test_mysql_bundle_contains_only_pinned_diagnostic_references(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle = module.package(Path(temporary) / "cloud-sql-triage", skill="cloud-sql-triage")
+            vendor = bundle / "references/planetscale-mysql"
+            expected = {"references/" + name + ".md" for name in (
+                "connection-management", "deadlocks", "row-locking-gotchas",
+                "explain-analysis", "replication-lag")}
+            self.assertEqual({str(p.relative_to(vendor)) for p in vendor.rglob("*") if p.is_file()},
+                             expected | {"LICENSE", "UPSTREAM.json"})
+            metadata = json.loads((vendor / "UPSTREAM.json").read_text())
+            self.assertEqual(set(metadata["included_files"]), expected)
+            self.assertEqual(metadata["entrypoint_mapping"], {})
+            for relative in expected:
+                self.assertEqual((vendor / relative).read_bytes(),
+                                 (ROOT / "upstream/planetscale-database-skills/skills/mysql" / relative).read_bytes())
+
+    def test_rejects_wrong_directory_name_and_unknown_skill(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            with self.assertRaisesRegex(ValueError, "leaf directory"):
+                module.package(Path(temporary) / "wrong-name", skill="delivery-triage")
+            with self.assertRaisesRegex(ValueError, "Unknown skill"):
+                module.package(Path(temporary) / "unknown", skill="unknown")
+
+    def test_broken_reference_and_symlink_fail_before_publish(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "repo"
+            source = root / "skills/delivery-triage"
+            source.mkdir(parents=True)
+            (source / "SKILL.md").write_text("[required](references/missing.md)\n")
+            destination = Path(temporary) / "out/delivery-triage"
+            with self.assertRaisesRegex(ValueError, "Unresolved"):
+                module.package(destination, root=root, skill="delivery-triage")
+            self.assertFalse(destination.exists())
+            (source / "SKILL.md").write_text("A skill\n")
+            (source / "escape").symlink_to(Path(temporary))
+            with self.assertRaisesRegex(ValueError, "symlinks"):
+                module.package(destination, root=root, skill="delivery-triage")
+            self.assertFalse(destination.exists())
+
     def test_self_contained_and_preserves_upstream(self):
         with tempfile.TemporaryDirectory() as temporary:
             destination = module.package(Path(temporary) / "workload-triage")
