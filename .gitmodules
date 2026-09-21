@@ -1,0 +1,4 @@
+[submodule "upstream/google-skills"]
+	path = upstream/google-skills
+	url = https://github.com/google/skills.git
+	branch = main
