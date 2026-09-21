@@ -29,20 +29,41 @@ artifacts can be analyzed without cloud access.
 ```bash
 git clone --recurse-submodules https://github.com/vprashar2929/ops-skills.git
 cd ops-skills
-python3 scripts/package_skill.py --skill workload-triage dist/workload-triage
 ```
 
-Choose another skill with `--skill`. The destination must be new and its final
-directory name must match the skill name, e.g. `dist/build-2/workload-triage`.
 For an existing clone, initialize dependencies with `git submodule update --init --recursive`.
+
+Build directly into your agent's personal skill directory. Run the command for
+your agent (macOS/Linux):
+
+```bash
+# Codex CLI / IDE
+python3 scripts/package_skill.py --skill workload-triage "$HOME/.agents/skills/workload-triage"
+
+# Claude Code
+python3 scripts/package_skill.py --skill workload-triage "$HOME/.claude/skills/workload-triage"
+```
+
+This installs the complete skill, including its pinned upstream references.
+Choose another skill by changing both `--skill` and the final directory name.
+Existing installations are never overwritten. For a reviewable build or update,
+use a new destination such as `dist/build-2/workload-triage`, then replace the
+installed folder after reviewing it and keeping a backup.
 
 Create a private YAML profile using the [profile example and contract](skills/workload-triage/references/targeting.md).
 Replace the example project, location, cluster and context with your own mappings.
 For managed GCP services, see the [cloud targeting contract](skills/cloud-sql-triage/references/operations.md).
-Then give an agent with local file/tool access a request such as:
+Open your agent, select the skill and supply your task:
+
+| Agent | Invoke the installed skill |
+| --- | --- |
+| [Codex CLI / IDE](https://learn.chatgpt.com/docs/build-skills) | Type `$workload-triage`, or select it using `/skills` |
+| [Claude Code](https://code.claude.com/docs/en/skills) | Type `/workload-triage` |
+
+For example, in Codex (replace the first line with `/workload-triage` in Claude Code):
 
 ```text
-Read /path/to/ops-skills/dist/workload-triage/SKILL.md and use that skill.
+$workload-triage
 Profile: /path/to/private/profile.yaml
 Environment: staging
 Cluster: apps
@@ -51,10 +72,11 @@ Workload: deployment/orders-api
 Show images, requests/limits, readiness and rollout state. Read-only.
 ```
 
-To install, use your agent's supported skill installation mechanism with the
-complete assembled directory. Source folders need packaging to include upstream
-references. Skill instructions do not enforce permissions or redact tool output;
-use appropriately scoped access. Billing queries may incur charges.
+If the skill does not appear, restart the agent. Other Agent Skills-compatible
+agents have their own discovery paths and invocation syntax; `/skills` is not a
+universal command. Install the complete assembled directory, not the source folder.
+Skill instructions do not enforce permissions or redact tool output; use
+appropriately scoped access. Billing queries may incur charges.
 
 ## Upstream references
 
