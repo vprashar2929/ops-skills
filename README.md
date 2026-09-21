@@ -120,6 +120,11 @@ revision and initialize its recorded submodule, then rebuild/reinstall its bundl
 
 ## Validation status
 
+Future changes follow the standing [skill maintenance requirements](AGENTS.md),
+including official Agent Skills validation of source, assembled and updated
+installed bundles. These checks are currently performed manually; no connected
+CI release gate is claimed.
+
 Packaging tests exercise a self-contained bundle with one skill entrypoint,
 preserved upstream content, refusal of local upstream edits/revision mismatch,
 and no destination overwrite. Command tests execute the documented pipefail
