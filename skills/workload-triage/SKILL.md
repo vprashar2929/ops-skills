@@ -1,6 +1,6 @@
 ---
 name: workload-triage
-description: List Kubernetes namespaces, inspect workload configuration, or investigate failed rollouts, restarts, logs, events, and ConfigMap or Secret wiring using an explicitly supplied client profile. Use for cluster namespace discovery or scoped workload inspection; return evidence and proposed next steps without changing the environment.
+description: List Kubernetes namespaces, resolve misspelled resource identifiers including custom resources, inspect workload configuration, or investigate rollout, log, and configuration failures using an explicitly supplied client profile. Return evidence and proposed next steps without changing the environment.
 ---
 
 # Workload triage
@@ -17,11 +17,17 @@ is required. For workload inspection, also resolve namespace, workload kind/name
 and any incident time window from the request. A profile supplies mappings and
 context, not authorization.
 Do not pick a client from the working directory or reuse another client's profile.
+For other resource inspections, including custom resources, resolve the served
+API type and scope using identifier-recovery.md; require a namespace only for
+namespaced resources.
 
 Require an explicit namespace for workload queries; do not default to `default`.
 If the workload is unknown, list names and status only within the requested
-namespace to help identify it. If a required target remains ambiguous, ask for
-that missing input before dependent reads. A profile can be supplied as a file
+namespace to help identify it. For an unknown or misspelled supplied identifier,
+read [identifier-recovery.md](references/identifier-recovery.md): use scoped
+discovery to suggest actual names, then confirm a changed target before inspecting
+it. Do not ask the user to repeatedly guess spellings. For genuinely missing
+required inputs, ask before dependent reads. A profile can be supplied as a file
 or its complete contents in the request.
 
 Verify the kubeconfig server against the intended cluster's identity before

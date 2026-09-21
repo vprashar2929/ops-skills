@@ -55,6 +55,13 @@ This verifies the cluster and lists namespace names/phases only. It does not sca
 workloads inside them. In a conversation where the profile was already supplied,
 reuse that explicit profile selection.
 
+Misspelled namespaces, resource kinds (including custom resources), object names,
+containers and requested keys/fields use scoped discovery to suggest real
+candidates. The skill confirms a changed target before inspecting it; valid
+unambiguous aliases work normally. It does not substitute names inside deployed
+configuration or interpret access failures as typos. See
+`skills/workload-triage/references/identifier-recovery.md` for the discovery rules.
+
 Install the complete assembled `workload-triage` directory using the target
 agent's supported skill installation mechanism when ready. Copying only SKILL.md
 loses references. Direct file invocation is the pilot path; automatic discovery

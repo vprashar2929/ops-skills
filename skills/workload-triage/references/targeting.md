@@ -67,7 +67,10 @@ the same endpoint verification. Credential setup is a separate task; neither
 Use `--request-timeout=20s` on Kubernetes API reads. For logs use finite
 `--pod-running-timeout=10s`, a finite request timeout, and no follow mode.
 Use the execution tool's timeout for cloud calls. Do not replace a failed read
-with a wider all-project/all-namespace scan.
+with a wider all-project/all-namespace workload scan. A missing identifier may
+trigger the limited name/API discovery in [identifier-recovery.md](identifier-recovery.md);
+this includes listing namespace names on the verified cluster to suggest a typo
+correction, without inspecting workloads in unconfirmed namespaces.
 
 ## Namespace discovery
 
