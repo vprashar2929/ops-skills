@@ -8,6 +8,12 @@ description: List Kubernetes namespaces, resolve misspelled resource identifiers
 Answer the operator's actual question. A request for resource limits or a Secret's
 key names needs a focused inspection, not a full incident investigation.
 
+Live inspection requires kubectl, configured authentication, and network access
+to the selected cluster. GKE identity verification also requires gcloud and
+permission to describe the intended cluster. The optional configuration helper
+requires Python 3 (standard library only); jq and Helm are needed only for commands
+that use them. Supplied offline evidence can be analyzed without live access.
+
 ## Resolve the target
 
 Read the explicitly supplied client profile and
@@ -44,9 +50,12 @@ contexts or automatically fetch credentials. State the resolved target briefly.
 - For controller/Pod state, rollout, events, and logs, read
   [workloads.md](references/workloads.md).
 - For environment variables, ConfigMaps, Secrets, mounts, and ExternalSecrets,
-  read [configuration.md](references/configuration.md).
+  read [configuration.md](references/configuration.md). For repeated key/supplier
+  checks, use [config_summary.py](scripts/config_summary.py) as described there
+  to summarize named objects without emitting payload values.
 - For GKE failure diagnosis, read [gke-adaptation.md](references/gke-adaptation.md)
-  and then the relevant sections of the bundled Google skill it identifies.
+  first, then the relevant symptom sections of the bundled
+  [Google workload guide](references/google-gke-workload/guide.md).
   Use its symptom branches as supporting knowledge with the documented
   adaptations; do not execute its workflow wholesale. A simple spec lookup
   does not need the GKE troubleshooting reference.
