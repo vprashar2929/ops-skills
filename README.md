@@ -7,26 +7,26 @@ credentials stay outside the repository. The skills do not perform remediation.
 
 ## Quick start
 
-Requires Git and Node.js 22.20+. These remote commands become available after the
-first [distribution publication](#publishing); until then, use the local build below.
+Requires Git and Node.js 22.20+. Install directly from the default branch:
 
 ```bash
 # Choose skills and agents interactively
-npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release
+npx skills@1.7.0 add vprashar2929/ops-skills
 
 # Browse available skills
-npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release --list
+npx skills@1.7.0 add vprashar2929/ops-skills --list
 
 # Install one skill for Codex and Claude Code
-npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release \
+npx skills@1.7.0 add vprashar2929/ops-skills \
   --skill workload-triage --agent codex claude-code
 ```
 
 Installation defaults to the current project; add `--global` for personal use.
 Choose either agent or both, and use `--skill '*'` to select all nine skills.
 The [skills CLI](https://github.com/vercel-labs/skills) supports additional agents;
-our installation checks cover Codex and Claude Code. `release` contains the complete
-bundles, including upstream references. The source branch requires building first.
+our installation checks cover Codex and Claude Code. Each directory under `skills/`
+is ready to install, including its pinned upstream references. No build or submodule
+checkout is needed to install or use a skill.
 
 Live inspection needs the skill's listed tools, authentication, permissions and
 network access. Supplied offline artifacts can be analyzed without cloud access.
@@ -55,31 +55,35 @@ Show images, requests/limits, readiness and rollout state. Read-only.
 
 If the skill does not appear, restart the agent. Other Agent Skills-compatible
 agents have their own discovery paths and invocation syntax; `/skills` is not a
-universal command. Install the complete assembled directory, not the source folder.
+universal command. Keep the complete skill directory, including its references and scripts.
 Skill instructions do not enforce permissions or redact tool output; use
 appropriately scoped access. Billing queries may incur charges.
 
 <details>
 <summary>Local development, manual installation and fixed revisions</summary>
 
-Build with Git and Python 3.9+:
+Install from a plain clone:
 
 ```bash
-git clone --recurse-submodules https://github.com/vprashar2929/ops-skills.git
+git clone https://github.com/vprashar2929/ops-skills.git
 cd ops-skills
-python3 scripts/package_skill.py --all dist/release
-npx skills@1.7.0 add ./dist/release --skill workload-triage --agent codex claude-code
+npx skills@1.7.0 add . --skill workload-triage --agent codex claude-code
 ```
 
-Build destinations must be new. For an existing clone, run
-`git submodule update --init --recursive` first. Without Node.js, build one skill
-directly into a new personal directory with `python3 scripts/package_skill.py --skill
-workload-triage "$HOME/.agents/skills/workload-triage"` (Codex), or use
-`$HOME/.claude/skills/workload-triage` for Claude Code. Back up an existing installation
-before replacing it; the packager refuses overwrites, whereas installers can update files.
+Without Node.js, copy `skills/workload-triage/` into a new
+`$HOME/.agents/skills/workload-triage` directory (Codex), or
+`$HOME/.claude/skills/workload-triage` (Claude Code). Back up an existing installation
+before replacing it. For a fixed revision, use
+`https://github.com/vprashar2929/ops-skills/tree/<commit-sha>` as the install source.
+CI checks installer version `1.7.0`.
 
-CI checks installer version `1.7.0`. For a fixed skill revision, replace `release`
-in the remote URL with a **distribution commit SHA**.
+An optional archive build requires Python 3.9+ and Git:
+
+```bash
+python3 scripts/package_skill.py --all dist/bundle
+```
+
+Build destinations must be new; the packager refuses overwrites.
 
 </details>
 
@@ -110,9 +114,25 @@ skill's operational boundaries.
 | [wshobson/agents](https://github.com/wshobson/agents) | Istio traffic and mesh observability | MIT |
 | [planetscale/database-skills](https://github.com/planetscale/database-skills) | Selected MySQL diagnostics | MIT |
 
-Selections live in [the packager](scripts/package_skill.py). Delivery and Kafka
-use locally authored procedures. Renovate schedules submodule and GitHub Actions
-updates weekly without automerge; running the bot requires separate repository setup.
+Selected references are committed under each skill's `references/` directory.
+Selections live in [the packager](scripts/package_skill.py); delivery and Kafka
+use locally authored procedures. Submodules are only needed to refresh or verify
+these copies. After reviewing an upstream content/license change and staging its
+new gitlink, refresh references in the same pull request:
+
+```bash
+git submodule update --init --recursive
+python3 scripts/sync_upstream.py
+python3 scripts/sync_upstream.py --check
+```
+
+The sync refuses dirty or unrecorded upstream revisions and preserves licenses,
+file contents and provenance. It only refreshes the explicit selections. If removing
+a selection, remove its committed reference directory in the same change. Review
+the resulting diff before committing it.
+Renovate schedules submodule and GitHub Actions updates weekly without automerge;
+its upstream update PRs also need the reviewed reference refresh. Running the bot
+requires separate repository setup.
 
 ## Contributing
 
@@ -122,10 +142,12 @@ reproduction and expected versus observed behavior in issues or pull requests.
 Follow [AGENTS.md](AGENTS.md) for format validation and upstream update checks.
 
 ```bash
+git submodule update --init --recursive
 python3 -m unittest discover -s tests -v
 ```
 
-The suite covers packaging and workload helpers; command tests also require bash
+The suite requires Python 3.9+, Git and the initialized pinned submodules. It covers
+packaging, reference sync and workload helpers; command tests also require bash
 and jq. [Behavior cases](tests/behavior-cases.md) and [fixtures](tests/fixtures/)
 are separate agent-driven scenarios, not automatically executed unit tests.
 
@@ -133,19 +155,28 @@ The project is experimental. Representative live and offline cases have been
 exercised; broad incident coverage and cross-agent parity are not established.
 Format validation is not proof of diagnostic accuracy or time savings.
 
-## Publishing
+## Distribution
 
-[Skill distribution](.github/workflows/distribution.yml) tests and builds on pull
-requests and pushes to `main`. It validates source and assembled skills with the
-official `skills-ref` tool, and checks real CLI installations for both agents.
-Artifacts retain script permissions, upstream licenses and revision records.
+Skills are distributed directly from `main`, following the repository installation
+pattern used by [Vercel](https://github.com/vercel-labs/agent-skills),
+[PlanetScale](https://github.com/planetscale/database-skills), and
+[Redis](https://github.com/redis/agent-skills). This is a distribution convention;
+the [Agent Skills specification](https://agentskills.io/specification) defines
+the skill format, without requiring a release branch or a particular installer.
+Our reference-sync helper supports this repo's pinned third-party content; it is
+not part of the standard. Merge a validated change to make it available to new
+installations. There is no release branch,
+publication job, npm package or marketplace registration to maintain.
 
-After merging, run **Actions → Skill distribution → Run workflow** on `main` to
-publish the validated bundles to `release`. Publication is manual, retains branch
-history and uses a separate job with write permission; PR validation has read-only
-repository permissions. Branch rules must permit this workflow to update `release`.
-Generated files belong on that branch; changes belong on `main`. No npm package or
-marketplace registration is required. License selection remains deferred.
+[Skill distribution](.github/workflows/distribution.yml) runs with read-only
+repository permissions on pull requests and pushes to `main`. It checks committed
+references against the pinned submodules, runs offline tests, validates source and
+assembled skills with the official `skills-ref` tool, and tests real CLI installs
+from both the repository and optional bundle for Codex and Claude Code. Its archive
+artifact retains script permissions, upstream licenses and revision records.
+
+For an installation previously sourced from `/tree/release`, retain a backup and
+reinstall using the default-branch command above to switch its update source.
 
 ## License
 

@@ -1,24 +1,61 @@
 """Offline packaging tests: no Kubernetes, cloud calls, or credentials."""
 
-import importlib.util
 import json
 from pathlib import Path
+import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
 from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("package_skill", ROOT / "scripts/package_skill.py")
-module = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(module)
+sys.path.insert(0, str(ROOT / "scripts"))
+import package_skill as module
+import sync_upstream
 
 
 class PackageTests(unittest.TestCase):
-    def test_distribution_is_complete_and_contains_only_release_files(self):
+    def test_source_is_installable_without_submodules(self):
         with tempfile.TemporaryDirectory() as temporary:
-            destination = module.package_distribution(Path(temporary) / "release")
+            root = Path(temporary) / "plain-clone"
+            shutil.copytree(ROOT / "skills", root / "skills")
+            for skill in module.SKILLS:
+                with self.subTest(skill=skill):
+                    source = root / "skills" / skill
+                    module.check_links(source)
+                    bundle = module.package(Path(temporary) / "bundle" / skill, root=root, skill=skill)
+                    self.assertEqual(sync_upstream.files(source), sync_upstream.files(bundle))
+
+    def test_upstream_check_detects_drift_without_writing_and_sync_repairs_it(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "repo"
+            shutil.copytree(ROOT / "skills", root / "skills")
+            # Read the real pinned upstream but mutate only a temporary source tree.
+            (root / "upstream").symlink_to(ROOT / "upstream", target_is_directory=True)
+            original_git = module.git
+
+            def git_at_real_root(directory, *args):
+                return original_git(ROOT if directory == root else directory, *args)
+
+            reference = root / "skills/workload-triage/references/google-gke-workload/guide.md"
+            reference.write_text("drift\n")
+            extra = reference.parent / "unexpected.txt"
+            extra.write_text("extra\n")
+            with mock.patch.object(module, "git", side_effect=git_at_real_root):
+                with self.assertRaisesRegex(ValueError, "Upstream references differ"):
+                    sync_upstream.sync_upstream(root, check=True)
+                self.assertEqual(reference.read_text(), "drift\n")
+                self.assertTrue(extra.exists())
+                self.assertEqual(sync_upstream.sync_upstream(root), 1)
+                self.assertFalse(extra.exists())
+                self.assertEqual(sync_upstream.sync_upstream(root, check=True), 0)
+                self.assertEqual(sync_upstream.files(root / "skills"), sync_upstream.files(ROOT / "skills"))
+
+    def test_distribution_is_complete_and_contains_only_bundle_files(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = module.package_distribution(Path(temporary) / "bundle")
             legal_files = {name for name in ("LICENSE", "NOTICE") if (ROOT / name).is_file()}
             self.assertEqual({p.name for p in destination.iterdir()},
                              {"skills", "README.md", "SOURCE.json"} | legal_files)
@@ -32,9 +69,9 @@ class PackageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "already exists"):
                 module.package_distribution(destination)
 
-    def test_failed_distribution_does_not_leave_partial_release(self):
+    def test_failed_distribution_does_not_leave_partial_bundle(self):
         with tempfile.TemporaryDirectory() as temporary:
-            destination = Path(temporary) / "release"
+            destination = Path(temporary) / "bundle"
             original = module.package
 
             def fail_after_one(*args, **kwargs):
@@ -151,11 +188,11 @@ class PackageTests(unittest.TestCase):
             subprocess.run(["git", "-C", str(root), "update-index", "--add", "--cacheinfo", f"160000,{revision},{module.SUBMODULE}"], check=True)
             (upstream / "file").write_text("edited\n")
             with self.assertRaisesRegex(ValueError, "local changes"):
-                module.package(Path(temporary) / "out", root=root)
+                module.package(Path(temporary) / "out", root=root, refresh_upstream=True)
             subprocess.run(["git", "-C", str(upstream), "add", "file"], check=True)
             subprocess.run(["git", "-C", str(upstream), "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false", "commit", "-qm", "new revision"], check=True)
             with self.assertRaisesRegex(ValueError, "differs from recorded"):
-                module.package(Path(temporary) / "out", root=root)
+                module.package(Path(temporary) / "out", root=root, refresh_upstream=True)
 
 
 if __name__ == "__main__":

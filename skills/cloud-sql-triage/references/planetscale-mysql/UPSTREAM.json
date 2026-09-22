@@ -1,0 +1,14 @@
+{
+  "repository": "https://github.com/planetscale/database-skills",
+  "revision": "73b20b7eb64716d8c7100c054f0677c0c6e77e30",
+  "path": "skills/mysql",
+  "modified": false,
+  "entrypoint_mapping": {},
+  "included_files": [
+    "references/connection-management.md",
+    "references/deadlocks.md",
+    "references/row-locking-gotchas.md",
+    "references/explain-analysis.md",
+    "references/replication-lag.md"
+  ]
+}

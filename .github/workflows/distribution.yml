@@ -29,61 +29,23 @@ jobs:
         run: python -m pip install 'skills-ref @ git+https://github.com/agentskills/agentskills.git@69ef37e9424c0a7ea9dd2293b559e43ec8176379#subdirectory=skills-ref'
       - name: Run offline tests and assemble distribution
         run: |
+          python scripts/sync_upstream.py --check
           python -m unittest discover -s tests -v
-          python scripts/package_skill.py --all dist/release
+          python scripts/package_skill.py --all dist/bundle
       - name: Validate source and assembled skill formats
         run: |
-          for skill in skills/* dist/release/skills/*; do
+          for skill in skills/* dist/bundle/skills/*; do
             skills-ref validate "$skill"
           done
       - name: Test installation for Codex and Claude Code
-        run: python tests/smoke_install.py dist/release
+        run: |
+          python tests/smoke_install.py .
+          python tests/smoke_install.py dist/bundle
       - name: Archive validated distribution
-        run: tar -czf "$RUNNER_TEMP/ops-skills.tar.gz" -C dist/release .
+        run: tar -czf "$RUNNER_TEMP/ops-skills.tar.gz" -C dist/bundle .
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ops-skills-distribution
           path: ${{ runner.temp }}/ops-skills.tar.gz
           if-no-files-found: error
           retention-days: 7
-
-  publish:
-    if: github.event_name == 'workflow_dispatch' && github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
-    needs: validate
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    permissions:
-      contents: write
-    concurrency:
-      group: publish-skills-release
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
-        with:
-          name: ops-skills-distribution
-          path: ${{ runner.temp }}/distribution-artifact
-      - name: Publish validated files to release branch
-        env:
-          SOURCE_COMMIT: ${{ github.sha }}
-        run: |
-          # Refuse an older build if main advanced while validation was running.
-          git fetch origin main
-          test "$(git rev-parse FETCH_HEAD)" = "$SOURCE_COMMIT"
-          if test -n "$(git ls-remote --heads origin refs/heads/release)"; then
-            git fetch origin release:refs/remotes/origin/release
-            git switch --force-create release refs/remotes/origin/release
-            git rm -r --ignore-unmatch .
-          else
-            git switch --orphan release
-          fi
-          tar -xzf "$RUNNER_TEMP/distribution-artifact/ops-skills.tar.gz"
-          python3 -c 'import json, os; d=json.load(open("SOURCE.json")); assert d["commit"] == os.environ["SOURCE_COMMIT"] and not d["dirty"]'
-          git add .
-          if git diff --cached --quiet; then
-            echo "Distribution is already current."
-            exit 0
-          fi
-          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
-            commit -m "build: publish skills from $SOURCE_COMMIT"
-          git push origin HEAD:refs/heads/release
