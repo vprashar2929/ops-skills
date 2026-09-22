@@ -2,7 +2,6 @@
 """Exercise the real skills CLI in temporary project directories, without cloud access."""
 
 import argparse
-import json
 import os
 from pathlib import Path
 import stat
@@ -12,12 +11,15 @@ import tempfile
 
 def files(directory):
     return {str(p.relative_to(directory)): (p.read_bytes(), stat.S_IMODE(p.stat().st_mode))
-            for p in directory.rglob("*") if p.is_file()}
+            for p in directory.rglob("*") if p.is_file()
+            and "__pycache__" not in p.parts and p.suffix != ".pyc"}
 
 
 def smoke_install(distribution):
     distribution = Path(distribution).resolve()
-    expected = set(json.loads((distribution / "SOURCE.json").read_text())["skills"])
+    expected = {p.parent.name for p in (distribution / "skills").glob("*/SKILL.md")}
+    if not expected:
+        raise AssertionError("No skills found in installation source")
     with tempfile.TemporaryDirectory(prefix="ops-skills-install-") as temporary:
         environment = dict(os.environ, DISABLE_TELEMETRY="1", DO_NOT_TRACK="1",
                            npm_config_ignore_scripts="true",
@@ -46,5 +48,5 @@ def smoke_install(distribution):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("distribution", type=Path)
+    parser.add_argument("distribution", type=Path, help="Repository or optional bundle root")
     smoke_install(parser.parse_args().distribution)

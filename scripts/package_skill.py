@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble a portable operational skill using reviewed, pinned upstream guides."""
+"""Copy self-contained skills into optional portable bundles."""
 
 import argparse
 import json
@@ -102,7 +102,7 @@ def check_links(directory):
                 raise ValueError(f"Unresolved or escaping link in {document.relative_to(directory)}: {link}")
 
 
-def package(destination, root=ROOT, skill="workload-triage"):
+def package(destination, root=ROOT, skill="workload-triage", *, refresh_upstream=False):
     if skill not in SKILLS:
         raise ValueError(f"Unknown skill: {skill}")
     destination = Path(destination).absolute()
@@ -112,7 +112,7 @@ def package(destination, root=ROOT, skill="workload-triage"):
         if destination.resolve().is_relative_to(source.resolve()):
             raise ValueError("Destination must be outside source and Git metadata directories")
 
-    selections = SKILLS[skill]
+    selections = SKILLS[skill] if refresh_upstream else []
     revisions = {path: checked_revision(root, path) for _, path, _ in selections}
     if destination.name != skill:
         raise ValueError(f"Destination leaf directory must match skill name: {skill}")
@@ -129,7 +129,13 @@ def package(destination, root=ROOT, skill="workload-triage"):
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".ops-skill-", dir=destination.parent) as temporary:
         staged = Path(temporary) / skill
-        shutil.copytree(source_skill, staged, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        def ignore(directory, names):
+            omitted = set(shutil.ignore_patterns("__pycache__", "*.pyc")(directory, names))
+            if refresh_upstream and Path(directory) == source_skill / "references":
+                omitted.update(label for label, _, _ in selections)
+            return omitted
+
+        shutil.copytree(source_skill, staged, ignore=ignore)
         for label, path, selected in selections:
             submodule = root / path
             vendor = staged / "references" / label
@@ -168,7 +174,7 @@ def package(destination, root=ROOT, skill="workload-triage"):
 
 
 def package_distribution(destination, root=ROOT):
-    """Build only complete skills and release metadata; never overwrite a build."""
+    """Build only complete skills and source metadata; never overwrite a build."""
     destination = Path(destination).absolute()
     if destination.exists() or destination.is_symlink():
         raise ValueError(f"Destination already exists; choose a new directory: {destination}")
@@ -187,12 +193,12 @@ def package_distribution(destination, root=ROOT):
         }, indent=2) + "\n")
         (staged / "README.md").write_text(
             "# ops-skills distribution\n\n"
-            "Generated bundles with pinned upstream references. Edit the source branch, "
-            "not this generated branch. SOURCE.json records the build's source commit "
+            "Optional archive of the self-contained skills on main. SOURCE.json records "
+            "the build's source commit "
             "and whether it included uncommitted changes.\n\n"
             "Install with Node.js 22.20+ and Git:\n\n"
             "```bash\n"
-            "npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release "
+            "npx skills@1.7.0 add vprashar2929/ops-skills "
             "--skill workload-triage --agent codex claude-code\n"
             "```\n\n"
             "Installation defaults to the current project; add --global for personal use. "
