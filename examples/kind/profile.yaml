@@ -1,0 +1,11 @@
+profile_version: 1
+client: local-kind
+provider: kubernetes
+environments:
+  local:
+    clusters:
+      apps:
+        name: ops-skills
+        kubectl_context: kind-ops-skills
+        # Must agree with cluster.yaml; change both if this port is occupied.
+        expected_api_server: https://127.0.0.1:16443

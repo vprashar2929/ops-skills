@@ -1,0 +1,7 @@
+apiVersion: testing.ops-skills.example/v1
+kind: Widget
+metadata:
+  name: report-policy
+  namespace: skill-lab
+spec:
+  replicas: 2

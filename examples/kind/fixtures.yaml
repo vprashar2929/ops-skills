@@ -1,0 +1,171 @@
+# Synthetic test data only. Several workloads are intentionally unhealthy.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: skill-lab
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-settings
+  namespace: skill-lab
+data:
+  APP_MODE: local-test
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: web-credentials
+  namespace: skill-lab
+type: Opaque
+stringData:
+  API_TOKEN: synthetic-only-do-not-display-7e23
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders-api
+  namespace: skill-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orders-api
+  template:
+    metadata:
+      labels:
+        app: orders-api
+    spec:
+      containers:
+        - name: web
+          image: busybox:1.37.0@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
+          command: [sh, -c]
+          args: ['mkdir -p /www; echo ready > /www/index.html; exec httpd -f -p 8080 -h /www']
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: web-settings
+          env:
+            - name: API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: web-credentials
+                  key: API_TOKEN
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 100m, memory: 32Mi}
+          readinessProbe:
+            httpGet: {path: /, port: http}
+            periodSeconds: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker-api
+  namespace: skill-lab
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: worker-api
+  template:
+    metadata:
+      labels:
+        app: worker-api
+    spec:
+      containers:
+        - name: worker
+          image: busybox:1.37.0@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
+          command: [sh, -c]
+          args: ['echo "FATAL: WORKER_MODE must be web; received batch"; exit 42']
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {cpu: 100m, memory: 32Mi}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: payments-api
+  namespace: skill-lab
+spec:
+  containers:
+    - name: app
+      image: busybox:1.37.0@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
+      command: [sleep, "3600"]
+      env:
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: payments-credentials
+              key: PASSWORD
+      resources:
+        requests: {cpu: 10m, memory: 16Mi}
+        limits: {cpu: 100m, memory: 32Mi}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: inventory-api
+  namespace: skill-lab
+spec:
+  containers:
+    - name: app
+      image: busybox:1.37.0@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
+      command: [sleep, "3600"]
+      envFrom:
+        - configMapRef:
+            name: inventory-settings
+      resources:
+        requests: {cpu: 10m, memory: 16Mi}
+        limits: {cpu: 100m, memory: 32Mi}
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: reports-api
+  namespace: skill-lab
+  labels:
+    app: reports-api
+spec:
+  containers:
+    - name: web
+      image: busybox:1.37.0@sha256:9db7b59979c38555a39def84a31fb98b5296952f9e3afd4f6f11f05b07adfab0
+      command: [sh, -c]
+      args: ['mkdir -p /www; echo ready > /www/index.html; exec httpd -f -p 8080 -h /www']
+      ports:
+        - name: http
+          containerPort: 8080
+      readinessProbe:
+        httpGet: {path: /readyz, port: http}
+        periodSeconds: 3
+      resources:
+        requests: {cpu: 10m, memory: 16Mi}
+        limits: {cpu: 100m, memory: 32Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders
+  namespace: skill-lab
+spec:
+  selector:
+    app: orders-v2
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reports
+  namespace: skill-lab
+spec:
+  selector:
+    app: reports-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

@@ -136,6 +136,9 @@ requires separate repository setup.
 
 ## Contributing
 
+For a local end-user trial without GCP, use the [kind example](examples/kind/README.md).
+It includes a synthetic profile and small Kubernetes failure scenarios.
+
 Use synthetic examples and keep client data, credentials and development reports
 out of changes. Include the affected skill, agent/tool versions, a sanitized
 reproduction and expected versus observed behavior in issues or pull requests.
