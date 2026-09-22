@@ -1,6 +1,7 @@
 ---
 name: redis-triage
 description: Investigate Redis connection failures, memory pressure, evictions and replication symptoms using an explicit client profile. Distinguishes Memorystore Redis instances, Memorystore Redis Cluster and self-managed Redis; performs metadata and bounded diagnostic reads without retrieving keys or changing Redis.
+license: Apache-2.0
 ---
 
 # Redis triage
@@ -79,3 +80,9 @@ named dev Memorystore instance over the last hour; do not read cache contents."
 Sources:
 - [Memorystore supported configurations](https://cloud.google.com/memorystore/docs/redis/supported-redis-configurations)
 - [Redis Cluster monitoring](https://cloud.google.com/memorystore/docs/cluster/monitor-instances)
+
+## License
+
+Copyright 2026 Vibhu Prashar. Original content in this skill is licensed under
+[Apache-2.0](LICENSE). Bundled third-party references retain their own licenses
+and copyright notices in their respective directories.

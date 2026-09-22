@@ -66,6 +66,7 @@ class PackageTests(unittest.TestCase):
             self.assertEqual(source["skills"], sorted(module.SKILLS))
             self.assertEqual(len(list(destination.rglob("SKILL.md"))), len(module.SKILLS))
             module.check_links(destination)
+            self.assertEqual((destination / "LICENSE").read_bytes(), (ROOT / "LICENSE").read_bytes())
             with self.assertRaisesRegex(ValueError, "already exists"):
                 module.package_distribution(destination)
 
@@ -93,6 +94,9 @@ class PackageTests(unittest.TestCase):
                     self.assertEqual([p.relative_to(bundle) for p in bundle.rglob("SKILL.md")],
                                      [Path("SKILL.md")])
                     module.check_links(bundle)
+                    license_text = (ROOT / "LICENSE").read_bytes()
+                    self.assertEqual((ROOT / "skills" / skill / "LICENSE").read_bytes(), license_text)
+                    self.assertEqual((bundle / "LICENSE").read_bytes(), license_text)
                     for label, path, selected in selections:
                         upstream = ROOT / path
                         vendor = bundle / "references" / label

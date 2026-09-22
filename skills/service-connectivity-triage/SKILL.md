@@ -1,6 +1,7 @@
 ---
 name: service-connectivity-triage
 description: Diagnose Kubernetes service reachability, timeouts and HTTP routing failures using Service, EndpointSlice, network policy and Istio evidence with an explicit client profile. Use for a named source-to-destination path; does not provision networking or run traffic probes.
+license: Apache-2.0
 ---
 
 # Service connectivity triage
@@ -80,3 +81,9 @@ does not identify whether the application, gateway or proxy generated it.
 
 Example: "Use this client profile in dev Apps to investigate HTTP 503 from source
 deployment/frontend to Service orders:8080 in namespace shop over the last 30m."
+
+## License
+
+Copyright 2026 Vibhu Prashar. Original content in this skill is licensed under
+[Apache-2.0](LICENSE). Bundled third-party references retain their own licenses
+and copyright notices in their respective directories.

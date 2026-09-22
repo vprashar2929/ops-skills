@@ -208,9 +208,10 @@ def package_distribution(destination, root=ROOT):
             "[targeting contract](skills/workload-triage/references/targeting.md), "
             "plus the environment and resource to inspect. Live inspection requires "
             "the relevant CLIs, authentication, permissions and network access.\n\n"
+            "Repository-authored content is licensed under [Apache-2.0](LICENSE). "
             "Each upstream reference retains its license and UPSTREAM.json provenance. "
             "See the [source repository](https://github.com/vprashar2929/ops-skills) "
-            "for maintenance instructions and the repository-authored license status.\n"
+            "for maintenance instructions.\n"
         )
         for name in ("LICENSE", "NOTICE"):
             if (root / name).is_file():

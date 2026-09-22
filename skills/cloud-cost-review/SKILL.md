@@ -1,6 +1,7 @@
 ---
 name: cloud-cost-review
 description: Explain Google Cloud spend and period-over-period changes from an explicitly scoped billing export using a client profile. Supports GKE allocation when export labels are available; does not estimate bills from kubectl usage or purchase commitments or resize resources.
+license: Apache-2.0
 ---
 
 # Cloud cost review
@@ -64,3 +65,9 @@ Do not alter budgets, exports, labels, IAM, reservations or billing association.
 Example: "Use this profile and billing table to compare these two complete UTC
 weeks for this project. Query project/location and maximum bytes billed are
 supplied. Explain the change by service and credits."
+
+## License
+
+Copyright 2026 Vibhu Prashar. Original content in this skill is licensed under
+[Apache-2.0](LICENSE). Bundled third-party references retain their own licenses
+and copyright notices in their respective directories.
