@@ -1,6 +1,7 @@
 ---
 name: observability-triage
 description: Investigate missing metrics, Prometheus scrape failures, alert behaviour and missing historical Cloud Logging data using an explicit client profile. Use to validate a monitoring signal or collection path; does not install monitoring or change alert rules.
+license: Apache-2.0
 ---
 
 # Observability triage
@@ -72,3 +73,9 @@ gaps. Distinguish "no matching data" from "zero errors" or "healthy application"
 
 Example: "Using this profile and Prometheus endpoint, explain why ServiceMonitor
 payments in test Apps has no series during the last hour. Do not change it."
+
+## License
+
+Copyright 2026 Vibhu Prashar. Original content in this skill is licensed under
+[Apache-2.0](LICENSE). Bundled third-party references retain their own licenses
+and copyright notices in their respective directories.

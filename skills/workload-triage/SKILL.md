@@ -1,6 +1,7 @@
 ---
 name: workload-triage
 description: List Kubernetes namespaces, resolve misspelled resource identifiers including custom resources, inspect workload configuration, or investigate rollout, log, and configuration failures using an explicitly supplied client profile. Return evidence and proposed next steps without changing the environment.
+license: Apache-2.0
 ---
 
 # Workload triage
@@ -120,3 +121,9 @@ names and timestamps, supported explanation versus hypotheses, material evidence
 gaps, and the smallest useful next step. Include the delivery owner/source for a
 proposed correction when established. Do not invent a manifest fix or declare
 healthy/unhealthy beyond the evidence collected. Avoid raw configuration dumps.
+
+## License
+
+Copyright 2026 Vibhu Prashar. Original content in this skill is licensed under
+[Apache-2.0](LICENSE). Bundled third-party references retain their own licenses
+and copyright notices in their respective directories.

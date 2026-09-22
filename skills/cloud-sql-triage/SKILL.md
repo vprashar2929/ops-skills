@@ -1,6 +1,7 @@
 ---
 name: cloud-sql-triage
 description: Inspect a named Google Cloud SQL instance and investigate availability, connection, capacity or replication symptoms using an explicit client profile. Use for managed MySQL, PostgreSQL or SQL Server operations; does not execute application SQL or change the instance.
+license: Apache-2.0
 ---
 
 # Cloud SQL triage
@@ -81,3 +82,9 @@ their SQL/tuning examples do not authorize sessions, queries or changes.
 
 Example: "Using this profile, investigate connection failures to the named dev
 Cloud SQL instance during this UTC window. Inspect metadata and metrics only."
+
+## License
+
+Copyright 2026 Vibhu Prashar. Original content in this skill is licensed under
+[Apache-2.0](LICENSE). Bundled third-party references retain their own licenses
+and copyright notices in their respective directories.

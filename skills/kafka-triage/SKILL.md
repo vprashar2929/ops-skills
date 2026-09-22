@@ -1,6 +1,7 @@
 ---
 name: kafka-triage
 description: Investigate Kafka cluster, consumer-lag and Kafka Connect or MirrorMaker failures using an explicit client profile. Starts with GCP managed Kafka or verified self-managed metadata and telemetry; does not consume messages, reset offsets, restart connectors or change topics.
+license: Apache-2.0
 ---
 
 # Kafka triage
@@ -83,3 +84,9 @@ Sources, checked 2026-09-21:
 - [GCP Kafka cluster troubleshooting](https://docs.cloud.google.com/managed-service-for-apache-kafka/docs/troubleshooting/troubleshoot-clusters)
 - [Connect monitoring](https://docs.cloud.google.com/managed-service-for-apache-kafka/docs/connect-cluster/monitor-connect-cluster)
 - [Kafka client monitoring](https://docs.cloud.google.com/managed-service-for-apache-kafka/docs/monitor-clients)
+
+## License
+
+Copyright 2026 Vibhu Prashar. Original content in this skill is licensed under
+[Apache-2.0](LICENSE). Bundled third-party references retain their own licenses
+and copyright notices in their respective directories.

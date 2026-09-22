@@ -180,5 +180,10 @@ reinstall using the default-branch command above to switch its update source.
 
 ## License
 
-A license for repository-authored code and documentation has not yet been chosen.
-Third-party content retains the upstream licenses listed above.
+Copyright 2026 Vibhu Prashar. Repository-authored code, skill instructions,
+documentation and examples are licensed under [Apache-2.0](LICENSE).
+Each installable skill includes a copy of the license.
+
+Third-party content in `upstream/` and the bundled reference directories retains
+its original license and copyright notices. See the [upstream references](#upstream-references)
+table and each reference directory's `LICENSE` and `UPSTREAM.json` for details.
