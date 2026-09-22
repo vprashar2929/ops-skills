@@ -1,0 +1,15 @@
+{
+  "commit": "de9797af3cf5e368256720418404eb1be29a1192",
+  "dirty": false,
+  "skills": [
+    "cloud-cost-review",
+    "cloud-sql-triage",
+    "delivery-triage",
+    "gke-cluster-triage",
+    "kafka-triage",
+    "observability-triage",
+    "redis-triage",
+    "service-connectivity-triage",
+    "workload-triage"
+  ]
+}

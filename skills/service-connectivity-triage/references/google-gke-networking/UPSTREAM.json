@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/google/skills",
+  "revision": "28094838f3069420a17303213faa9297f5c6e84d",
+  "path": "skills/cloud/gke-networking",
+  "modified": false,
+  "entrypoint_mapping": {
+    "SKILL.md": "guide.md"
+  }
+}
