@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,6 +16,38 @@ spec.loader.exec_module(module)
 
 
 class PackageTests(unittest.TestCase):
+    def test_distribution_is_complete_and_contains_only_release_files(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = module.package_distribution(Path(temporary) / "release")
+            legal_files = {name for name in ("LICENSE", "NOTICE") if (ROOT / name).is_file()}
+            self.assertEqual({p.name for p in destination.iterdir()},
+                             {"skills", "README.md", "SOURCE.json"} | legal_files)
+            self.assertEqual({p.name for p in (destination / "skills").iterdir()}, set(module.SKILLS))
+            source = json.loads((destination / "SOURCE.json").read_text())
+            self.assertEqual(source["commit"], module.git(ROOT, "rev-parse", "HEAD"))
+            self.assertIsInstance(source["dirty"], bool)
+            self.assertEqual(source["skills"], sorted(module.SKILLS))
+            self.assertEqual(len(list(destination.rglob("SKILL.md"))), len(module.SKILLS))
+            module.check_links(destination)
+            with self.assertRaisesRegex(ValueError, "already exists"):
+                module.package_distribution(destination)
+
+    def test_failed_distribution_does_not_leave_partial_release(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary) / "release"
+            original = module.package
+
+            def fail_after_one(*args, **kwargs):
+                if kwargs["skill"] == "service-connectivity-triage":
+                    raise ValueError("Missing upstream reference")
+                return original(*args, **kwargs)
+
+            with mock.patch.object(module, "package", side_effect=fail_after_one):
+                with self.assertRaisesRegex(ValueError, "Missing upstream"):
+                    module.package_distribution(destination)
+            self.assertFalse(destination.exists())
+            self.assertEqual(list(Path(temporary).iterdir()), [])
+
     def test_all_skills_preserve_selected_sources_and_resolve_links(self):
         with tempfile.TemporaryDirectory() as temporary:
             for skill, selections in module.SKILLS.items():

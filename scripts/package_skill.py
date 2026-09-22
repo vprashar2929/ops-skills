@@ -167,12 +167,65 @@ def package(destination, root=ROOT, skill="workload-triage"):
     return destination
 
 
+def package_distribution(destination, root=ROOT):
+    """Build only complete skills and release metadata; never overwrite a build."""
+    destination = Path(destination).absolute()
+    if destination.exists() or destination.is_symlink():
+        raise ValueError(f"Destination already exists; choose a new directory: {destination}")
+    for source in (root / "skills", root / "upstream", root / "scripts", root / "tests", root / ".git"):
+        if destination.resolve().is_relative_to(source.resolve()):
+            raise ValueError("Destination must be outside source and Git metadata directories")
+    revision = git(root, "rev-parse", "HEAD")
+    dirty = bool(git(root, "status", "--porcelain", "--untracked-files=all"))
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".ops-distribution-", dir=destination.parent) as temporary:
+        staged = Path(temporary) / "distribution"
+        for skill in SKILLS:
+            package(staged / "skills" / skill, root=root, skill=skill)
+        (staged / "SOURCE.json").write_text(json.dumps({
+            "commit": revision, "dirty": dirty, "skills": sorted(SKILLS),
+        }, indent=2) + "\n")
+        (staged / "README.md").write_text(
+            "# ops-skills distribution\n\n"
+            "Generated bundles with pinned upstream references. Edit the source branch, "
+            "not this generated branch. SOURCE.json records the build's source commit "
+            "and whether it included uncommitted changes.\n\n"
+            "Install with Node.js 22.20+ and Git:\n\n"
+            "```bash\n"
+            "npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release "
+            "--skill workload-triage --agent codex claude-code\n"
+            "```\n\n"
+            "Installation defaults to the current project; add --global for personal use. "
+            "Use --list to inspect the catalog or --skill '*' to select all skills.\n\n"
+            "Invoke $workload-triage in Codex or /workload-triage in Claude Code. "
+            "Supply your own private profile using the "
+            "[targeting contract](skills/workload-triage/references/targeting.md), "
+            "plus the environment and resource to inspect. Live inspection requires "
+            "the relevant CLIs, authentication, permissions and network access.\n\n"
+            "Each upstream reference retains its license and UPSTREAM.json provenance. "
+            "See the [source repository](https://github.com/vprashar2929/ops-skills) "
+            "for maintenance instructions and the repository-authored license status.\n"
+        )
+        for name in ("LICENSE", "NOTICE"):
+            if (root / name).is_file():
+                if (root / name).is_symlink():
+                    raise ValueError(f"Review repository {name} symlink before packaging")
+                shutil.copy2(root / name, staged / name)
+        check_links(staged)
+        if destination.exists() or destination.is_symlink():
+            raise ValueError("Destination appeared during packaging; choose a new directory")
+        staged.rename(destination)
+    return destination
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("destination", type=Path, help="New directory with the same name as the skill")
-    parser.add_argument("--skill", choices=SKILLS, default="workload-triage")
+    parser.add_argument("destination", type=Path, help="New skill directory, or distribution directory with --all")
+    selection = parser.add_mutually_exclusive_group()
+    selection.add_argument("--skill", choices=SKILLS, default="workload-triage")
+    selection.add_argument("--all", action="store_true", help="Assemble all skills for distribution")
     args = parser.parse_args()
     try:
-        print(package(args.destination, skill=args.skill))
+        print(package_distribution(args.destination) if args.all else package(args.destination, skill=args.skill))
     except (ValueError, OSError, subprocess.CalledProcessError) as error:
         parser.exit(1, f"Packaging failed: {error}\n")

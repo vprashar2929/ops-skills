@@ -3,7 +3,7 @@
   "git-submodules": { "enabled": true },
   "packageRules": [
     {
-      "matchManagers": ["git-submodules"],
+      "matchManagers": ["git-submodules", "github-actions"],
       "automerge": false,
       "schedule": ["before 6am on monday"]
     }
