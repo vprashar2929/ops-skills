@@ -7,6 +7,10 @@ credentials stay outside the repository. The skills do not perform remediation.
 
 ## Quick start
 
+New to this repo? Start with the [Codex local-lab walkthrough](examples/kind/README.md).
+It takes you from prerequisites to a live diagnosis and cleanup without cloud
+credentials. Use the installation below when you already have a target environment.
+
 Requires Git and Node.js 22.20+. Install directly from the default branch:
 
 ```bash
@@ -157,6 +161,8 @@ are separate agent-driven scenarios, not automatically executed unit tests.
 The project is experimental. Representative live and offline cases have been
 exercised; broad incident coverage and cross-agent parity are not established.
 Format validation is not proof of diagnostic accuracy or time savings.
+The local lab demonstrates evidence collection and diagnosis, not production
+readiness, automatic remediation, or an accuracy advantage over an agent alone.
 
 ## Distribution
 
