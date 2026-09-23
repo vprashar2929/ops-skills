@@ -36,6 +36,8 @@ Live inspection needs the skill's listed tools, authentication, permissions and
 network access. Supplied offline artifacts can be analyzed without cloud access.
 
 Create a private YAML profile using the [profile example and contract](skills/workload-triage/references/targeting.md).
+For complete copyable GKE and managed-GCP examples and a first lookup, see the
+[profile starter guide](examples/profiles/README.md).
 Replace the example project, location, cluster and context with your own mappings.
 For managed GCP services, see the [cloud targeting contract](skills/cloud-sql-triage/references/operations.md).
 Open your agent, select the skill and supply your task:

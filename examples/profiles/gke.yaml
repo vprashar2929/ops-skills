@@ -1,0 +1,12 @@
+# Synthetic template. Copy outside this repository and replace every example value.
+profile_version: 1
+client: example-client
+provider: gke
+environments:
+  staging:
+    gcp_project: example-staging-project
+    location: europe-west2
+    clusters:
+      apps:
+        name: example-staging-apps
+        kubectl_context: example-staging-apps-context
