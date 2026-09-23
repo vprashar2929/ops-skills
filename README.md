@@ -160,6 +160,13 @@ packaging, reference sync and workload helpers; command tests also require bash
 and jq. [Behavior cases](tests/behavior-cases.md) and [fixtures](tests/fixtures/)
 are separate agent-driven scenarios, not automatically executed unit tests.
 
+For paired trials with and without a skill, use the
+[diagnostic evaluation scaffold](tests/evaluation/README.md). It prepares six
+workload/connectivity cases, captures fresh agent traces, and keeps human-reviewed
+diagnostic results separate from execution and packaging checks.
+The [Codex hard-case study](tests/evaluation/README.md#codex-hard-case-study)
+adds ambiguous failures, ownership and rollback cases with repeated paired runs.
+
 The project is experimental. Representative live and offline cases have been
 exercised; broad incident coverage and cross-agent parity are not established.
 Format validation is not proof of diagnostic accuracy or time savings.
