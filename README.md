@@ -11,26 +11,27 @@ New to this repo? Start with the [Codex local-lab walkthrough](examples/kind/REA
 It takes you from prerequisites to a live diagnosis and cleanup without cloud
 credentials. Use the installation below when you already have a target environment.
 
-Requires Git and Node.js 22.20+. Install directly from the default branch:
+Requires Git and Node.js 22.20+. Install the validated distribution from `release`:
 
 ```bash
 # Choose skills and agents interactively
-npx skills@1.7.0 add vprashar2929/ops-skills
+npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release
 
 # Browse available skills
-npx skills@1.7.0 add vprashar2929/ops-skills --list
+npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release --list
 
 # Install one skill for Codex and Claude Code
-npx skills@1.7.0 add vprashar2929/ops-skills \
+npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release \
   --skill workload-triage --agent codex claude-code
 ```
 
 Installation defaults to the current project; add `--global` for personal use.
 Choose either agent or both, and use `--skill '*'` to select all nine skills.
 The [skills CLI](https://github.com/vercel-labs/skills) supports additional agents;
-our installation checks cover Codex and Claude Code. Each directory under `skills/`
-is ready to install, including its pinned upstream references. No build or submodule
-checkout is needed to install or use a skill.
+our installation checks cover Codex and Claude Code. Each published skill includes
+its pinned upstream references. No build or submodule checkout is needed to
+install or use the distribution. `main` contains build inputs: do not install its
+skill directories directly, because upstream references are assembled during packaging.
 
 Live inspection needs the skill's listed tools, authentication, permissions and
 network access. Supplied offline artifacts can be analyzed without cloud access.
@@ -39,7 +40,7 @@ Create a private YAML profile using the [profile example and contract](skills/wo
 For complete copyable GKE and managed-GCP examples and a first lookup, see the
 [profile starter guide](examples/profiles/README.md).
 Replace the example project, location, cluster and context with your own mappings.
-For managed GCP services, see the [cloud targeting contract](skills/cloud-sql-triage/references/operations.md).
+For managed GCP services, see the [cloud targeting contract](shared/operations.md).
 Open your agent, select the skill and supply your task:
 
 | Agent | Invoke the installed skill |
@@ -68,26 +69,22 @@ appropriately scoped access. Billing queries may incur charges.
 <details>
 <summary>Local development, manual installation and fixed revisions</summary>
 
-Install from a plain clone:
+Building local changes requires Python 3.9+ and initialized submodules:
 
 ```bash
-git clone https://github.com/vprashar2929/ops-skills.git
+git clone --recurse-submodules https://github.com/vprashar2929/ops-skills.git
 cd ops-skills
-npx skills@1.7.0 add . --skill workload-triage --agent codex claude-code
+python3 scripts/package_skill.py --all dist/bundle
+npx skills@1.7.0 add ./dist/bundle --skill workload-triage --agent codex claude-code
 ```
 
-Without Node.js, copy `skills/workload-triage/` into a new
+Without Node.js, copy the assembled `dist/bundle/skills/workload-triage/` into a new
 `$HOME/.agents/skills/workload-triage` directory (Codex), or
 `$HOME/.claude/skills/workload-triage` (Claude Code). Back up an existing installation
-before replacing it. For a fixed revision, use
-`https://github.com/vprashar2929/ops-skills/tree/<commit-sha>` as the install source.
+before replacing it. For a fixed version or rollback, use
+`https://github.com/vprashar2929/ops-skills/tree/<release-commit-sha>` as the install
+source. Choose a commit from the `release` branch, not a source commit from `main`.
 CI checks installer version `1.7.0`.
-
-An optional archive build requires Python 3.9+ and Git:
-
-```bash
-python3 scripts/package_skill.py --all dist/bundle
-```
 
 Build destinations must be new; the packager refuses overwrites.
 
@@ -120,25 +117,30 @@ skill's operational boundaries.
 | [wshobson/agents](https://github.com/wshobson/agents) | Istio traffic and mesh observability | MIT |
 | [planetscale/database-skills](https://github.com/planetscale/database-skills) | Selected MySQL diagnostics | MIT |
 
-Selected references are committed under each skill's `references/` directory.
-Selections live in [the packager](scripts/package_skill.py); delivery and Kafka
-use locally authored procedures. Submodules are only needed to refresh or verify
-these copies. After reviewing an upstream content/license change and staging its
-new gitlink, refresh references in the same pull request:
+The submodule gitlinks pin the upstream revisions. Selections live in
+[the packager](scripts/package_skill.py); delivery and Kafka use locally authored
+procedures. Generated upstream references are not maintained in the source tree.
+The packager copies selected content into each distribution's `references/`
+directory. After reviewing an upstream content/license change and staging its
+new gitlink, build and inspect the resulting skills:
 
 ```bash
 git submodule update --init --recursive
-python3 scripts/sync_upstream.py
-python3 scripts/sync_upstream.py --check
+python3 scripts/package_skill.py --all dist/upstream-review
 ```
 
-The sync refuses dirty or unrecorded upstream revisions and preserves licenses,
-file contents and provenance. It only refreshes the explicit selections. If removing
-a selection, remove its committed reference directory in the same change. Review
-the resulting diff before committing it.
-Renovate schedules submodule and GitHub Actions updates weekly without automerge;
-its upstream update PRs also need the reviewed reference refresh. Running the bot
-requires separate repository setup.
+The packager refuses dirty or unrecorded upstream revisions and preserves licenses,
+file contents and provenance. It includes only the explicit selections and rejects
+generated copies placed back in source. Required links must resolve inside each
+assembled skill. Source `SKILL.md` links to shared and upstream resources resolve
+after building.
+
+Hosted Renovate schedules submodule and GitHub Actions updates weekly without
+automerge. A submodule update needs no reference-refresh commit or post-upgrade
+script: CI builds from its proposed pin. Review the upstream content and license
+diffs and the CI bundle before merging; passing format checks does not approve new
+instructions. Upstream moves or incompatible content can still require changes
+to the selections or local procedures. Running the bot requires separate repository setup.
 
 ## Contributing
 
@@ -156,8 +158,8 @@ python3 -m unittest discover -s tests -v
 ```
 
 The suite requires Python 3.9+, Git and the initialized pinned submodules. It covers
-packaging, reference sync and workload helpers; command tests also require bash
-and jq. [Behavior cases](tests/behavior-cases.md) and [fixtures](tests/fixtures/)
+packaging, publication against a local bare Git remote, and workload helpers;
+command tests also require bash and jq. [Behavior cases](tests/behavior-cases.md) and [fixtures](tests/fixtures/)
 are separate agent-driven scenarios, not automatically executed unit tests.
 
 For paired trials with and without a skill, use the
@@ -167,34 +169,60 @@ diagnostic results separate from execution and packaging checks.
 The [Codex hard-case study](tests/evaluation/README.md#codex-hard-case-study)
 adds ambiguous failures, ownership and rollback cases with repeated paired runs.
 
-The project is experimental. Representative live and offline cases have been
-exercised; broad incident coverage and cross-agent parity are not established.
-Format validation is not proof of diagnostic accuracy or time savings.
-The local lab demonstrates evidence collection and diagnosis, not production
-readiness, automatic remediation, or an accuracy advantage over an agent alone.
+The project is experimental. Broad incident coverage and cross-agent behavioral
+parity are not established. Format and installation checks do not prove diagnostic
+accuracy, production readiness or time savings.
 
 ## Distribution
 
-Skills are distributed directly from `main`, following the repository installation
-pattern used by [Vercel](https://github.com/vercel-labs/agent-skills),
-[PlanetScale](https://github.com/planetscale/database-skills), and
-[Redis](https://github.com/redis/agent-skills). This is a distribution convention;
-the [Agent Skills specification](https://agentskills.io/specification) defines
-the skill format, without requiring a release branch or a particular installer.
-Our reference-sync helper supports this repo's pinned third-party content; it is
-not part of the standard. Merge a validated change to make it available to new
-installations. There is no release branch,
-publication job, npm package or marketplace registration to maintain.
+The source and distribution layouts have separate responsibilities:
 
-[Skill distribution](.github/workflows/distribution.yml) runs with read-only
-repository permissions on pull requests and pushes to `main`. It checks committed
-references against the pinned submodules, runs offline tests, validates source and
-assembled skills with the official `skills-ref` tool, and tests real CLI installs
-from both the repository and optional bundle for Codex and Claude Code. Its archive
-artifact retains script permissions, upstream licenses and revision records.
+| Location on `main` | Maintained content |
+| --- | --- |
+| `skills/<name>/` | Authored skill instructions, scripts and local references; build inputs |
+| `shared/` | Authored references maintained once and copied into selected skills |
+| `upstream/` | Git submodules pinned to exact upstream revisions |
+| `scripts/package_skill.py` | Selection rules and assembly; creates complete skill directories |
+| `scripts/publish_distribution.py` | Publishes the already validated bundle; does not assemble it |
+| `tests/` | Unit, packaging, publication and installer checks, plus evaluation fixtures |
+| `.github/workflows/distribution.yml` | Coordinates validation and publication |
+| `dist/` | Ignored local build output; never maintained by hand |
 
-For an installation previously sourced from `/tree/release`, retain a backup and
-reinstall using the default-branch command above to switch its update source.
+On `release`, `skills/<name>/` contains each complete skill, including its operational
+scripts, shared guidance and selected upstream references. Repository build scripts,
+tests and submodules are excluded. `SOURCE.json` identifies the source commit;
+each upstream reference has `UPSTREAM.json` recording its origin and selection.
+Edit sources on `main`; `release` is generated. The bare `owner/repo` installer
+shorthand selects `main`, so use the explicit `/tree/release` URL.
+
+Edit [the shared operational contract](shared/operations.md) once; the packager
+includes it in each selected skill. Installed skills remain self-contained.
+This publishing layout is our choice: the
+[Agent Skills specification](https://agentskills.io/specification) defines the skill
+format, without requiring a release branch or a particular installer.
+
+[Skill distribution](.github/workflows/distribution.yml) builds from the pinned
+sources on every PR and push to `main`. Its validation job has read-only repository
+permissions. It runs offline tests, validates source and assembled formats with
+official `skills-ref`, checks packaged links, and tests real CLI installations of
+the bundle for Codex and Claude Code in copy and symlink modes. The archive retains
+script permissions, upstream licenses and provenance. PR artifacts are available
+for review; they are never published as releases.
+
+After a successful `main` build, a separate job with `contents: write` publishes
+that same validated artifact using [the publisher](scripts/publish_distribution.py).
+It verifies the clean source revision and staged Git file contents, skips superseded
+builds, and pushes without force. Git ignore rules cannot drop validated files;
+Git attribute transformations cause publication to fail rather than alter them.
+Previous distribution commits remain available for fixed installs and rollback.
+Failed validation prevents publication; a rejected push leaves the previous release
+intact. If a job fails after pushing, check `release`'s `SOURCE.json` before retrying.
+Repository policy must allow the workflow token to push to `release`.
+
+Use the workflow's manual trigger on `main` to retry publication. After deploying
+the workflow, confirm that `release`'s `SOURCE.json` records the intended source
+commit before installing it. Local development uses the same packager and installs
+from `dist/bundle`; moving a checkout is not an installation update.
 
 ## License
 
@@ -202,6 +230,6 @@ Copyright 2026 Vibhu Prashar. Repository-authored code, skill instructions,
 documentation and examples are licensed under [Apache-2.0](LICENSE).
 Each installable skill includes a copy of the license.
 
-Third-party content in `upstream/` and the bundled reference directories retains
+Third-party content in `upstream/` and the published reference directories retains
 its original license and copyright notices. See the [upstream references](#upstream-references)
 table and each reference directory's `LICENSE` and `UPSTREAM.json` for details.

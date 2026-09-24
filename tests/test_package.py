@@ -5,6 +5,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import stat
 import tempfile
 import unittest
 from unittest import mock
@@ -13,45 +14,72 @@ from unittest import mock
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 import package_skill as module
-import sync_upstream
 
 
 class PackageTests(unittest.TestCase):
-    def test_source_is_installable_without_submodules(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary) / "plain-clone"
-            shutil.copytree(ROOT / "skills", root / "skills")
-            for skill in module.SKILLS:
-                with self.subTest(skill=skill):
-                    source = root / "skills" / skill
-                    module.check_links(source)
-                    bundle = module.package(Path(temporary) / "bundle" / skill, root=root, skill=skill)
-                    self.assertEqual(sync_upstream.files(source), sync_upstream.files(bundle))
+    def test_builds_from_upstream_without_changing_source(self):
+        def files(directory):
+            return {str(p.relative_to(directory)): (p.read_bytes(), stat.S_IMODE(p.stat().st_mode))
+                    for p in directory.rglob("*") if p.is_file()
+                    and "__pycache__" not in p.parts and p.suffix != ".pyc"}
 
-    def test_upstream_check_detects_drift_without_writing_and_sync_repairs_it(self):
+        before = files(ROOT / "skills")
+        with tempfile.TemporaryDirectory() as temporary:
+            for skill, selections in module.SKILLS.items():
+                with self.subTest(skill=skill):
+                    for label, _, _ in selections:
+                        self.assertFalse((ROOT / "skills" / skill / "references" / label).exists())
+                    first = module.package(Path(temporary) / "first" / skill, skill=skill)
+                    second = module.package(Path(temporary) / "second" / skill, skill=skill)
+                    self.assertEqual(files(first), files(second))
+        self.assertEqual(files(ROOT / "skills"), before)
+
+    def test_rejects_a_generated_copy_in_source(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary) / "repo"
             shutil.copytree(ROOT / "skills", root / "skills")
-            # Read the real pinned upstream but mutate only a temporary source tree.
             (root / "upstream").symlink_to(ROOT / "upstream", target_is_directory=True)
             original_git = module.git
 
             def git_at_real_root(directory, *args):
                 return original_git(ROOT if directory == root else directory, *args)
 
-            reference = root / "skills/workload-triage/references/google-gke-workload/guide.md"
-            reference.write_text("drift\n")
-            extra = reference.parent / "unexpected.txt"
-            extra.write_text("extra\n")
+            reference = root / "skills/workload-triage/references/google-gke-workload"
+            reference.mkdir()
+            (reference / "guide.md").write_text("stale copy")
             with mock.patch.object(module, "git", side_effect=git_at_real_root):
-                with self.assertRaisesRegex(ValueError, "Upstream references differ"):
-                    sync_upstream.sync_upstream(root, check=True)
-                self.assertEqual(reference.read_text(), "drift\n")
-                self.assertTrue(extra.exists())
-                self.assertEqual(sync_upstream.sync_upstream(root), 1)
-                self.assertFalse(extra.exists())
-                self.assertEqual(sync_upstream.sync_upstream(root, check=True), 0)
-                self.assertEqual(sync_upstream.files(root / "skills"), sync_upstream.files(ROOT / "skills"))
+                with self.assertRaisesRegex(ValueError, "Generated reference"):
+                    module.package(Path(temporary) / "workload-triage", root=root)
+            self.assertEqual((reference / "guide.md").read_text(), "stale copy")
+
+    def test_updating_only_the_gitlink_updates_the_bundled_reference(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "source"
+            root.mkdir()
+            module.git(root, "init", "-q")
+            source = root / "skills/workload-triage"
+            source.mkdir(parents=True)
+            (source / "SKILL.md").write_text("See [guide](references/google-gke-workload/guide.md).\n")
+            upstream = root / module.SUBMODULE
+            selected = upstream / module.SELECTED
+            selected.mkdir(parents=True)
+            module.git(upstream, "init", "-q")
+            (upstream / "LICENSE").write_text("Upstream fixture license\n")
+            module.git(root, "config", "-f", ".gitmodules",
+                       f"submodule.{module.SUBMODULE}.url", "https://example.invalid/upstream.git")
+            for version in ("original", "updated"):
+                (selected / "SKILL.md").write_text(version + "\n")
+                module.git(upstream, "add", ".")
+                module.git(upstream, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid",
+                           "-c", "commit.gpgsign=false", "commit", "-qm", version)
+                revision = module.git(upstream, "rev-parse", "HEAD")
+                module.git(root, "update-index", "--add", "--cacheinfo",
+                           f"160000,{revision},{module.SUBMODULE}")
+                bundle = module.package(Path(temporary) / version / "workload-triage", root=root)
+                reference = bundle / "references/google-gke-workload"
+                self.assertEqual((reference / "guide.md").read_text(), version + "\n")
+                self.assertEqual(json.loads((reference / "UPSTREAM.json").read_text())["revision"], revision)
+                self.assertFalse((source / "references").exists())
 
     def test_distribution_is_complete_and_contains_only_bundle_files(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -69,6 +97,27 @@ class PackageTests(unittest.TestCase):
             self.assertEqual((destination / "LICENSE").read_bytes(), (ROOT / "LICENSE").read_bytes())
             with self.assertRaisesRegex(ValueError, "already exists"):
                 module.package_distribution(destination)
+
+    def test_distribution_refuses_an_unregistered_source_skill(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary) / "repo"
+            shutil.copytree(ROOT / "skills", root / "skills")
+            shutil.copy2(ROOT / "LICENSE", root / "LICENSE")
+            (root / "upstream").symlink_to(ROOT / "upstream", target_is_directory=True)
+            new_skill = root / "skills/new-triage"
+            new_skill.mkdir()
+            (new_skill / "SKILL.md").write_text(
+                "---\nname: new-triage\ndescription: Inspect a new service.\n---\n")
+            original_git = module.git
+
+            def git_at_real_root(directory, *args):
+                return original_git(ROOT if directory == root else directory, *args)
+
+            destination = Path(temporary) / "bundle"
+            with mock.patch.object(module, "git", side_effect=git_at_real_root):
+                with self.assertRaisesRegex(ValueError, "unregistered.*new-triage"):
+                    module.package_distribution(destination, root=root)
+            self.assertFalse(destination.exists())
 
     def test_failed_distribution_does_not_leave_partial_bundle(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -94,6 +143,10 @@ class PackageTests(unittest.TestCase):
                     self.assertEqual([p.relative_to(bundle) for p in bundle.rglob("SKILL.md")],
                                      [Path("SKILL.md")])
                     module.check_links(bundle)
+                    for name, consumers in module.SHARED_REFERENCES.items():
+                        if skill in consumers:
+                            self.assertEqual((bundle / "references" / name).read_bytes(),
+                                             (ROOT / "shared" / name).read_bytes())
                     license_text = (ROOT / "LICENSE").read_bytes()
                     self.assertEqual((ROOT / "skills" / skill / "LICENSE").read_bytes(), license_text)
                     self.assertEqual((bundle / "LICENSE").read_bytes(), license_text)
@@ -140,6 +193,7 @@ class PackageTests(unittest.TestCase):
             root = Path(temporary) / "repo"
             source = root / "skills/delivery-triage"
             source.mkdir(parents=True)
+            shutil.copytree(ROOT / "shared", root / "shared")
             (source / "SKILL.md").write_text("[required](references/missing.md)\n")
             destination = Path(temporary) / "out/delivery-triage"
             with self.assertRaisesRegex(ValueError, "Unresolved"):
@@ -192,11 +246,11 @@ class PackageTests(unittest.TestCase):
             subprocess.run(["git", "-C", str(root), "update-index", "--add", "--cacheinfo", f"160000,{revision},{module.SUBMODULE}"], check=True)
             (upstream / "file").write_text("edited\n")
             with self.assertRaisesRegex(ValueError, "local changes"):
-                module.package(Path(temporary) / "out", root=root, refresh_upstream=True)
+                module.package(Path(temporary) / "out", root=root)
             subprocess.run(["git", "-C", str(upstream), "add", "file"], check=True)
             subprocess.run(["git", "-C", str(upstream), "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c", "commit.gpgsign=false", "commit", "-qm", "new revision"], check=True)
             with self.assertRaisesRegex(ValueError, "differs from recorded"):
-                module.package(Path(temporary) / "out", root=root, refresh_upstream=True)
+                module.package(Path(temporary) / "out", root=root)
 
 
 if __name__ == "__main__":

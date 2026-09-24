@@ -12,7 +12,7 @@ Setup changes the disposable cluster; the diagnostic task is read-only.
 ## 1. Check prerequisites
 
 Requires a running Docker-compatible runtime, kind v0.33.0, kubectl compatible
-with Kubernetes 1.34, Git, Node.js 22.20+, jq, and an authenticated Codex CLI.
+with Kubernetes 1.34, Git, Python 3.9+, Node.js 22.20+, jq, and an authenticated Codex CLI.
 The optional configuration helpers use Python 3 (standard library); PyYAML is
 not required. The agent can read the profile as text.
 The node and workload images are pinned. The API listens on `127.0.0.1:16443`.
@@ -45,7 +45,6 @@ the printed directory path: it identifies your credentials and cleanup target.
 A dedicated kubeconfig keeps your existing cluster configuration intact.
 
 ```bash
-kind_repo_dir="$PWD"
 kind_test_dir="$(mktemp -d "${TMPDIR:-/tmp}/ops-skills-kind.XXXXXX")"
 printf 'Lab directory: %s\n' "$kind_test_dir"
 kind create cluster --config examples/kind/cluster.yaml \
@@ -72,18 +71,20 @@ Continue in the same shell from the repository root:
 
 ```bash
 mkdir "$kind_test_dir/project"
+git submodule update --init --recursive
+python3 scripts/package_skill.py --all "$kind_test_dir/bundle"
 cp examples/kind/profile.yaml "$kind_test_dir/project/profile.yaml"
 cp "$kind_test_dir/kubeconfig" "$kind_test_dir/project/kubeconfig"
 chmod 600 "$kind_test_dir/project/kubeconfig"
 cd "$kind_test_dir/project"
-npx --yes skills@1.7.0 add "$kind_repo_dir" \
+npx --yes skills@1.7.0 add "$kind_test_dir/bundle" \
   --skill workload-triage service-connectivity-triage --agent codex --copy --yes
 KUBECONFIG="$kind_test_dir/project/kubeconfig" \
   codex --sandbox read-only --ask-for-approval on-request
 ```
 
-Skills install directly from this checkout; no bundle build or submodule checkout
-is needed. Copy mode leaves a self-contained snapshot in this temporary project;
+The bundle is built from this checkout and its pinned upstreams using Python 3.9+.
+Copy mode leaves a self-contained snapshot in this temporary project;
 it does not replace personal installations. Relaunch Codex if needed, and select
 `workload-triage` from `/skills` or type its name below.
 

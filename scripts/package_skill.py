@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Copy self-contained skills into optional portable bundles."""
+"""Assemble portable skills from authored files and pinned upstream sources."""
 
 import argparse
 import json
@@ -53,6 +53,15 @@ SKILLS = {
     "kafka-triage": [],
 }
 
+# Shared authored references are copied into each selected skill at build time.
+SHARED_REFERENCES = {
+    "operations.md": {
+        "service-connectivity-triage", "gke-cluster-triage",
+        "observability-triage", "delivery-triage", "cloud-sql-triage",
+        "redis-triage", "cloud-cost-review", "kafka-triage",
+    },
+}
+
 # Only these diagnostic references are needed; omit the provider-oriented
 # entrypoint and its floating main-branch links and schema-design material.
 REFERENCE_FILES = {
@@ -102,21 +111,32 @@ def check_links(directory):
                 raise ValueError(f"Unresolved or escaping link in {document.relative_to(directory)}: {link}")
 
 
-def package(destination, root=ROOT, skill="workload-triage", *, refresh_upstream=False):
+def package(destination, root=ROOT, skill="workload-triage"):
     if skill not in SKILLS:
         raise ValueError(f"Unknown skill: {skill}")
     destination = Path(destination).absolute()
     if destination.exists() or destination.is_symlink():
         raise ValueError(f"Destination already exists; choose a new directory: {destination}")
-    for source in (root / "skills", root / "upstream", root / "scripts", root / "tests", root / ".git"):
+    for source in (root / "skills", root / "shared", root / "upstream", root / "scripts", root / "tests", root / ".git"):
         if destination.resolve().is_relative_to(source.resolve()):
             raise ValueError("Destination must be outside source and Git metadata directories")
 
-    selections = SKILLS[skill] if refresh_upstream else []
+    selections = SKILLS[skill]
     revisions = {path: checked_revision(root, path) for _, path, _ in selections}
     if destination.name != skill:
         raise ValueError(f"Destination leaf directory must match skill name: {skill}")
     source_skill = root / "skills" / skill
+    shared = [name for name, consumers in SHARED_REFERENCES.items() if skill in consumers]
+    for name in shared:
+        source = root / "shared" / name
+        reject_symlinks(source)
+        if not source.is_file():
+            raise ValueError(f"Required shared reference is missing: {source}")
+        if (source_skill / "references" / name).exists():
+            raise ValueError(f"Shared reference must not be maintained in source: {skill}/{name}")
+    for label, _, _ in selections:
+        if (source_skill / "references" / label).exists():
+            raise ValueError(f"Generated reference must not be maintained in source: {skill}/{label}")
     for source in [source_skill] + [root / path / selected for _, path, selected in selections]:
         if not (source / "SKILL.md").is_file():
             raise ValueError(f"Required skill is missing: {source}")
@@ -129,13 +149,12 @@ def package(destination, root=ROOT, skill="workload-triage", *, refresh_upstream
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".ops-skill-", dir=destination.parent) as temporary:
         staged = Path(temporary) / skill
-        def ignore(directory, names):
-            omitted = set(shutil.ignore_patterns("__pycache__", "*.pyc")(directory, names))
-            if refresh_upstream and Path(directory) == source_skill / "references":
-                omitted.update(label for label, _, _ in selections)
-            return omitted
-
-        shutil.copytree(source_skill, staged, ignore=ignore)
+        shutil.copytree(source_skill, staged,
+                        ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        for name in shared:
+            target = staged / "references" / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(root / "shared" / name, target)
         for label, path, selected in selections:
             submodule = root / path
             vendor = staged / "references" / label
@@ -178,9 +197,15 @@ def package_distribution(destination, root=ROOT):
     destination = Path(destination).absolute()
     if destination.exists() or destination.is_symlink():
         raise ValueError(f"Destination already exists; choose a new directory: {destination}")
-    for source in (root / "skills", root / "upstream", root / "scripts", root / "tests", root / ".git"):
+    for source in (root / "skills", root / "shared", root / "upstream", root / "scripts", root / "tests", root / ".git"):
         if destination.resolve().is_relative_to(source.resolve()):
             raise ValueError("Destination must be outside source and Git metadata directories")
+    source_skills = {p.parent.name for p in (root / "skills").glob("*/SKILL.md")}
+    if source_skills != set(SKILLS):
+        raise ValueError(
+            f"Skill catalog differs from packaging selections: "
+            f"unregistered sources {sorted(source_skills - set(SKILLS))}; "
+            f"missing sources {sorted(set(SKILLS) - source_skills)}")
     revision = git(root, "rev-parse", "HEAD")
     dirty = bool(git(root, "status", "--porcelain", "--untracked-files=all"))
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -193,12 +218,12 @@ def package_distribution(destination, root=ROOT):
         }, indent=2) + "\n")
         (staged / "README.md").write_text(
             "# ops-skills distribution\n\n"
-            "Optional archive of the self-contained skills on main. SOURCE.json records "
-            "the build's source commit "
+            "Generated skills with pinned upstream references. Edit the source branch, "
+            "not this distribution. SOURCE.json records the source commit "
             "and whether it included uncommitted changes.\n\n"
             "Install with Node.js 22.20+ and Git:\n\n"
             "```bash\n"
-            "npx skills@1.7.0 add vprashar2929/ops-skills "
+            "npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release "
             "--skill workload-triage --agent codex claude-code\n"
             "```\n\n"
             "Installation defaults to the current project; add --global for personal use. "
