@@ -106,6 +106,15 @@ kubectl --context "$context" --namespace "$namespace" --request-timeout=20s \
   python3 "$skill_dir/scripts/pod_config_compare.py"
 ```
 
+For offline evidence, check the input shape before choosing the helper: it expects
+a Kubernetes `List` containing exactly one Deployment, ReplicaSet and Pod, each
+with API version and metadata name, namespace, UID and resourceVersion. An incident
+report envelope is not that List. If the supplied objects lack required metadata,
+do not invent it, repeatedly retry the helper, or bypass its validation through
+internal functions. Compare only the supplied reference fields directly and state
+the missing coverage. Check available controller names, UIDs, kinds/API versions
+and namespace; without matching owner identities, do not claim verified ownership.
+
 Never display or persist the raw objects: templates/Pods may hold literal secrets.
 The helper performs no API calls, validates the controller owner chain, and emits
 only projected reference differences. It compares containers, init containers

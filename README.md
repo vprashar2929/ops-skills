@@ -1,6 +1,6 @@
 # ops-skills distribution
 
-Generated bundles with pinned upstream references. Edit the source branch, not this generated branch. SOURCE.json records the build's source commit and whether it included uncommitted changes.
+Generated skills with pinned upstream references. Edit the source branch, not this distribution. SOURCE.json records the source commit and whether it included uncommitted changes.
 
 Install with Node.js 22.20+ and Git:
 
@@ -12,4 +12,4 @@ Installation defaults to the current project; add --global for personal use. Use
 
 Invoke $workload-triage in Codex or /workload-triage in Claude Code. Supply your own private profile using the [targeting contract](skills/workload-triage/references/targeting.md), plus the environment and resource to inspect. Live inspection requires the relevant CLIs, authentication, permissions and network access.
 
-Each upstream reference retains its license and UPSTREAM.json provenance. See the [source repository](https://github.com/vprashar2929/ops-skills) for maintenance instructions and the repository-authored license status.
+Repository-authored content is licensed under [Apache-2.0](LICENSE). Each upstream reference retains its license and UPSTREAM.json provenance. See the [source repository](https://github.com/vprashar2929/ops-skills) for maintenance instructions.

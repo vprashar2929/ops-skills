@@ -1,6 +1,7 @@
 ---
 name: delivery-triage
 description: Diagnose a failed pipeline, Helm release or Argo CD reconciliation by tracing the actual run, chart, values and deployed revision with an explicit client profile. Use for delivery provenance and rollout ownership; does not sync, roll back or redeploy.
+license: Apache-2.0
 ---
 
 # Delivery triage
@@ -77,3 +78,9 @@ Sources:
 - [Helm status](https://helm.sh/docs/helm/helm_status/)
 - [Argo Application specification](https://argo-cd.readthedocs.io/en/stable/user-guide/application-specification/)
 - [Argo resource health](https://argo-cd.readthedocs.io/en/stable/operator-manual/health/)
+
+## License
+
+Copyright 2026 Vibhu Prashar. Original content in this skill is licensed under
+[Apache-2.0](LICENSE). Bundled third-party references retain their own licenses
+and copyright notices in their respective directories.

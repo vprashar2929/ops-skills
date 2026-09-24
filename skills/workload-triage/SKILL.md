@@ -1,6 +1,7 @@
 ---
 name: workload-triage
 description: List Kubernetes namespaces, resolve misspelled resource identifiers including custom resources, inspect workload configuration, or investigate rollout, log, and configuration failures using an explicitly supplied client profile. Return evidence and proposed next steps without changing the environment.
+license: Apache-2.0
 ---
 
 # Workload triage
@@ -55,7 +56,8 @@ contexts or automatically fetch credentials. State the resolved target briefly.
   to summarize named objects without emitting payload values.
 - For Deployment-template versus running-Pod configuration, follow the comparison
   section in [configuration.md](references/configuration.md) and use
-  [pod_config_compare.py](scripts/pod_config_compare.py). Compare through the
+  [pod_config_compare.py](scripts/pod_config_compare.py) when its input prerequisites
+  are met; that section also covers partial offline artifacts. Compare through the
   Pod's owning ReplicaSet so rollout differences stay separate from Pod changes.
 - For GKE failure diagnosis, read [gke-adaptation.md](references/gke-adaptation.md)
   first, then the relevant symptom sections of the bundled
@@ -105,6 +107,10 @@ under the tool's approval rules; do not repeat a successful sibling command.
 Pending or cancelled approval is an uncollected result, not a cluster failure.
 Keep this bookkeeping in the working evidence; a narrow answer needs only the
 requested result and material gaps, not a full command ledger.
+Use tool-provided collection timestamps or capture UTC before and after the read
+in the same invocation; see the example in targeting.md. Resource/event timestamps
+are not collection times. If timing or session IDs are unavailable, say so; never
+reconstruct an exact observation window from event times or memory.
 
 Keep secret payloads out of tool output and artifacts: query metadata and key
 names, not Secret YAML/JSON or decoded values. Configuration and logs can also
@@ -120,3 +126,9 @@ names and timestamps, supported explanation versus hypotheses, material evidence
 gaps, and the smallest useful next step. Include the delivery owner/source for a
 proposed correction when established. Do not invent a manifest fix or declare
 healthy/unhealthy beyond the evidence collected. Avoid raw configuration dumps.
+
+## License
+
+Copyright 2026 Vibhu Prashar. Original content in this skill is licensed under
+[Apache-2.0](LICENSE). Bundled third-party references retain their own licenses
+and copyright notices in their respective directories.

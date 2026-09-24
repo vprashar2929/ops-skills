@@ -93,7 +93,11 @@ them; use an established sanitizing path or omit payloads and report the gap.
 Instructions are not a technical permission or redaction boundary.
 
 Associate every result with command, target, UTC time/window, session ID, exit
-status and truncation. Use pipefail within EACH shell invocation containing a
+status and truncation. Use tool-provided collection timestamps or capture UTC
+before and after the read in the same invocation, preserving its exit status.
+Resource/event/log timestamps are not collection times. If collection timing or
+session IDs are unavailable, say so; never invent an exact observation window.
+Use pipefail within EACH shell invocation containing a
 collection pipeline, or check collection status before parsing. Do not suppress
 errors with || true or treat a filter's success as collection success. Label
 parallel results; retry only the identified failed read, not successful siblings.

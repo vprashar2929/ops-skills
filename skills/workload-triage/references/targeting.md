@@ -104,10 +104,26 @@ an earlier tool call does not carry over. For example, after resolving the targe
 
 ```bash
 set -o pipefail
-kubectl --context "$context" --namespace "$namespace" --request-timeout=20s \
-  get "$workload" -o json |
-  jq '{name: .metadata.name, readyReplicas: .status.readyReplicas}'
+date -u '+collection_started_at=%Y-%m-%dT%H:%M:%SZ' >&2
+if kubectl --context "$context" --namespace "$namespace" --request-timeout=20s \
+    get "$workload" -o json |
+    jq '{name: .metadata.name, readyReplicas: .status.readyReplicas}'; then
+  collection_status=0
+else
+  collection_status=$?
+fi
+date -u '+collection_finished_at=%Y-%m-%dT%H:%M:%SZ' >&2
+exit "$collection_status"
 ```
+
+Run this as one tool shell invocation, not pasted into the operator's interactive
+shell (`exit` returns its status). UTC bounds go to stderr, leaving projected JSON
+on stdout. The conditional preserves a failed collection/filter even with shell
+errexit enabled and allows the finish timestamp to be captured. Use the tool's
+command/session ID; if it is absent, report it unavailable. Do not confuse resource
+creation, event or log timestamps with these collection bounds. For parallel reads,
+capture bounds separately in each invocation. If no collection timestamps were
+recorded, state that gap rather than inventing an exact observation window.
 
 Inspect that command's exit status and stderr before interpreting the result.
 Do not append a successful command that hides the pipeline's status, suppress
