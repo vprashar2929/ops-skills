@@ -1,14 +1,19 @@
 # Target and profile contract
 
 The profile is plain YAML read by the agent, not a new executable configuration
-system. Require `profile_version: 1`, `client`, `provider` (`gke` or `kubernetes`),
+system. Require `profile_version: 1`, `profile`, `provider` (`gke` or `kubernetes`),
 and `environments`. Each environment maps cluster roles to their names and local
 kubectl contexts. GKE additionally needs the exact project and location. Generic
 Kubernetes needs an operator-maintained `expected_api_server` per cluster.
 
+`profile` is a non-empty identifier for the selected set of target mappings.
+Profiles may be organized per user, cluster, environment, or a combination;
+their names do not imply ownership, credentials or authorization. Keep environment
+and resource selections explicit even when a profile covers only one target.
+
 ```yaml
 profile_version: 1
-client: example-client
+profile: example-profile
 provider: gke
 environments:
   staging:
@@ -26,7 +31,7 @@ Environment names are exact keys: do not silently translate `stage`, `nprod`,
 `nprd`, or `prod`. Do not infer an environment from a Git branch. The request
 chooses the namespace and workload for workload inspection; namespace listing
 requires neither. Profiles should not default every workload to one namespace.
-Unknown profile versions require clarification, not guessing.
+Unknown profile versions require clarification, not guessing their schema.
 Missing optional conventions do not prevent ordinary Kubernetes inspection.
 
 ## Identity verification
@@ -51,7 +56,7 @@ gcloud container clusters describe "$cluster" \
 Accept a matching IP or DNS endpoint after normalizing an optional `https://`
 prefix and default port. The expected project, name, and location must match;
 a matching context name alone proves nothing. For generic Kubernetes compare
-the server URL to `expected_api_server`; it must come from maintained client
+the server URL to `expected_api_server`; it must come from maintained profile
 context, not be copied from the active context during this investigation.
 
 If the target uses an approved proxy/Connect Gateway endpoint, ask for its
@@ -74,7 +79,7 @@ correction, without inspecting workloads in unconfirmed namespaces.
 
 ## Namespace discovery
 
-For a request such as “list namespaces in dev Apps,” resolve the explicit client
+For a request such as “list namespaces in dev Apps,” resolve the explicit
 profile, environment and cluster, then perform the identity verification above.
 Do not ask for a namespace or workload: Namespace is a cluster-scoped resource.
 List namespace names and phases with a finite timeout and explicit context:
@@ -86,7 +91,7 @@ kubectl --context "$context" --request-timeout=20s get namespaces \
 ```
 
 Do not add `--namespace` or `--all-namespaces` to this command. Return the table
-with the resolved client/environment/cluster and observation time. Include system
+with the resolved profile/environment/cluster and observation time. Include system
 namespaces unless the user requests a narrower list; state any applied filter.
 An Active namespace does not establish the health of its workloads.
 

@@ -67,7 +67,7 @@ not provide an end-time filter. State any truncation and prefer the configured
 log backend for precise historical windows. Redact sensitive excerpts before
 including them in a report; raw log collection can itself expose sensitive data
 to the agent, so avoid unrelated streams and use an existing filtered backend
-when the client requires one.
+when the selected profile requires one.
 
 Cloud Logging is an optional GKE fallback, not assumed to contain all Pod logs.
 Use the verified log project/bucket/view when provided. Otherwise a bounded query
@@ -101,7 +101,7 @@ the newest local chart or values were deployed. If relevant, use scoped
 `helm --kube-context "$context" --namespace "$namespace" history "$release"`;
 avoid `helm get all`/unfiltered values. For Argo, inspect the identified
 Application's source revision and effective sync policy using its explicit
-management context/namespace from client context; never guess those or sync it.
+management context/namespace from profile context; never guess those or sync it.
 
 A failed pipeline may already have rolled back or uninstalled a release. Existing
 failure artifacts can describe a different revision than current Pods. Inspect

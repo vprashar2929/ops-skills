@@ -2,7 +2,7 @@
 
 Portable [Agent Skills](https://agentskills.io/) for Kubernetes and Google Cloud
 operations. Inspect resources, investigate symptoms and return evidence with next
-steps. Use explicit client profiles and existing CLI/API access; profiles and
+steps. Use explicit profiles and existing CLI/API access; profiles and
 credentials stay outside the repository. The skills do not perform remediation.
 For Prometheus HTTP queries, a supplied endpoint URL is sufficient; no profile is required.
 
@@ -38,6 +38,8 @@ Live inspection needs the skill's listed tools, authentication, permissions and
 network access. Supplied offline artifacts can be analyzed without cloud access.
 
 Create a private YAML profile using the [profile example and contract](skills/workload-triage/references/targeting.md).
+Use `profile_version: 1`. The `profile` identity field names a set of target
+mappings; profiles can be organized per user, cluster, environment, or a combination.
 For complete copyable GKE and managed-GCP examples and a first lookup, see the
 [profile starter guide](examples/profiles/README.md).
 Replace the example project, location, cluster and context with your own mappings.
@@ -148,8 +150,8 @@ to the selections or local procedures. Running the bot requires separate reposit
 For a local end-user trial without GCP, use the [kind example](examples/kind/README.md).
 It includes a synthetic profile and small Kubernetes failure scenarios.
 
-Use synthetic examples and keep client data, credentials and development reports
-out of changes. Include the affected skill, agent/tool versions, a sanitized
+Use synthetic examples and keep private operational data, credentials and
+development reports out of changes. Include the affected skill, agent/tool versions, a sanitized
 reproduction and expected versus observed behavior in issues or pull requests.
 Follow [AGENTS.md](AGENTS.md) for format validation and upstream update checks.
 

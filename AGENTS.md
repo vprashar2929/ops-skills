@@ -21,7 +21,7 @@ Before declaring a skill change complete:
   correctness. Do not contact live infrastructure solely to validate formatting.
 - Preserve the pinned upstream content and its attribution. Review upstream
   content and license changes before advancing a gitlink; passing format checks
-  alone does not approve new instructions. Keep client profiles outside packages.
+  alone does not approve new instructions. Keep profiles outside packages.
   Update shared operational guidance consistently across affected skills.
 - When updating an installation, validate the final installed directory and
   verify it matches the tested bundle. Retain a recoverable previous bundle.

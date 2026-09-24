@@ -6,6 +6,12 @@ outside this repository and replace all example identifiers. Never put credentia
 in a profile. For local Kubernetes, the [kind lab profile](../kind/profile.yaml)
 provides a complete example of the generic Kubernetes contract.
 
+Set `profile` to a non-empty identifier meaningful to you. Organize profiles per
+user (for example, `alex`), cluster (`apps-eu`), environment (`staging`), or a
+combination (`alex-staging-apps`). Each file supplies `profile_version: 1`,
+`provider` and explicit `environments` mappings. The identifier does not select
+credentials, imply ownership, or grant access.
+
 These are mappings, not authentication or authorization. Before live GKE use,
 configure kubectl authentication separately and ensure gcloud can describe the
 selected cluster. The skill verifies the context endpoint against that cluster.
@@ -27,9 +33,9 @@ Read-only; do not show values.
 ```
 
 Reuse that explicit selection for follow-up questions in the same session. Supply
-a different selection when switching clients or environments. The namespace and
-workload belong in the request; avoid putting a catch-all default namespace in the
-profile. The agent should ask only for genuinely missing selections.
+a different selection when switching profiles, clusters or environments. The
+namespace and workload belong in the request; avoid putting a catch-all default
+namespace in the profile. The agent should ask only for genuinely missing selections.
 
 For managed Cloud SQL, use the GCP profile and supply the exact instance and time
 window instead of a Kubernetes cluster/namespace:
@@ -44,7 +50,7 @@ Inspect metadata and existing telemetry only.
 ```
 
 This example has not been exercised against a live Cloud SQL instance. Access to
-telemetry in another project requires its explicit client mapping. Do not invent
+telemetry in another project requires its explicit profile mapping. Do not invent
 that mapping from the resource's project.
 
 ## What a useful answer looks like

@@ -1,6 +1,6 @@
 ---
 name: redis-triage
-description: Investigate Redis connection failures, memory pressure, evictions and replication symptoms using an explicit client profile. Distinguishes Memorystore Redis instances, Memorystore Redis Cluster and self-managed Redis; performs metadata and bounded diagnostic reads without retrieving keys or changing Redis.
+description: Investigate Redis connection failures, memory pressure, evictions and replication symptoms using an explicit profile. Distinguishes Memorystore Redis instances, Memorystore Redis Cluster and self-managed Redis; performs metadata and bounded diagnostic reads without retrieving keys or changing Redis.
 license: Apache-2.0
 ---
 
@@ -11,7 +11,7 @@ for Memorystore metadata or verified kubectl for self-managed workloads. Direct
 Redis diagnostics additionally require an existing approved connection/client;
 do not fetch credentials, start a tunnel or run exec to create one.
 
-Resolve the exact client/environment/project/region/resource and incident window.
+Resolve the exact profile/environment/project/region/resource and incident window.
 Establish product type from supplied context or scoped metadata; a Terraform
 module name or redis-looking Pod is not proof of a Memorystore product. If type
 is unknown, list names/types in the confirmed project/region, suggest actual
@@ -67,8 +67,8 @@ No SLOWLOG RESET, CONFIG SET, writes, eviction tests, failover, resharding, flus
 MONITOR, full key scans, key-value reads or FT.PROFILE workload execution. Do not
 emit raw SLOWLOG command arguments or CLIENT LIST payloads. Use a pre-existing
 sanitizing path for slowlog duration/count/command-name metadata, otherwise skip
-that output and state the gap. Upstream example thresholds are not client SLOs.
-Managed products may restrict commands; unsupported is not unhealthy.
+that output and state the gap. Upstream example thresholds are not SLOs for the
+selected profile. Managed products may restrict commands; unsupported is not unhealthy.
 
 Return verified product/topology, time-series evidence and counter intervals,
 supported cause, unavailable signals and the smallest next step. A READY managed

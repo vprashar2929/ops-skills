@@ -1,6 +1,6 @@
 ---
 name: delivery-triage
-description: Diagnose a failed pipeline, Helm release or Argo CD reconciliation by tracing the actual run, chart, values and deployed revision with an explicit client profile. Use for delivery provenance and rollout ownership; does not sync, roll back or redeploy.
+description: Diagnose a failed pipeline, Helm release or Argo CD reconciliation by tracing the actual run, chart, values and deployed revision with an explicit profile. Use for delivery provenance and rollout ownership; does not sync, roll back or redeploy.
 license: Apache-2.0
 ---
 

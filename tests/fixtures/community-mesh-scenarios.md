@@ -7,7 +7,7 @@ Profile for all cases:
 
 ```yaml
 profile_version: 1
-client: example-client
+profile: example-profile
 provider: gke
 environments:
   staging:

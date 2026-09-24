@@ -1,6 +1,6 @@
 ---
 name: gke-cluster-triage
-description: Investigate GKE node health, node-pool capacity, autoscaler blocks and persistent-volume failures with an explicit client profile. Use for shared cluster infrastructure symptoms or a scoped cluster health check; does not resize, upgrade, drain or repair resources.
+description: Investigate GKE node health, node-pool capacity, autoscaler blocks and persistent-volume failures with an explicit profile. Use for shared cluster infrastructure symptoms or a scoped cluster health check; does not resize, upgrade, drain or repair resources.
 license: Apache-2.0
 ---
 
@@ -67,7 +67,7 @@ Return the affected scope, supported failure domain, event/metric chronology,
 capacity/placement constraints and evidence gaps. Separate a recommended change
 from its execution and include the owning source if established.
 
-Example: "Use this client profile, test Apps. Explain why the named node pool is
+Example: "Use this profile, test Apps. Explain why the named node pool is
 not scaling for the supplied Pending Pod; read-only, last 60 minutes."
 
 ## License

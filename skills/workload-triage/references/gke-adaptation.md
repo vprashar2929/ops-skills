@@ -16,7 +16,7 @@ Apply these specific adaptations:
 
 | Upstream behavior | Behavior in workload-triage |
 | --- | --- |
-| Infer active project/context and default namespace | Resolve explicit client/environment/cluster/namespace and verify endpoint first |
+| Infer active project/context and default namespace | Resolve explicit profile/environment/cluster/namespace and verify endpoint first |
 | Fetch cluster credentials | Use an existing verified context; report setup gaps |
 | On failed access, synthesize a cause and fix | Separate hypotheses from facts; no asserted cause or patch without evidence |
 | Diagnose exit codes as unique causes | Correlate termination reason, events, logs and metrics; exit 137 or 128 alone is insufficient |
@@ -27,5 +27,5 @@ Apply these specific adaptations:
 | Create/update a branch and PR as the last step | Return a recommendation; source changes/PRs require a separate requested change task |
 
 The upstream skill supplies useful symptom branches and official reference links.
-Our additions cover client targeting, delivery ownership, configuration provenance,
+Our additions cover profile targeting, delivery ownership, configuration provenance,
 and evidence handling. Neither instruction layer enforces tool permissions.

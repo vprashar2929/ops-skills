@@ -1,6 +1,6 @@
 ---
 name: cloud-cost-review
-description: Discover billing exports within confirmed client projects and explain Google Cloud spend and period-over-period changes using a client profile. Supports GKE allocation when export labels are available; does not estimate bills from kubectl usage or purchase commitments or resize resources.
+description: Discover billing exports within confirmed profile projects and explain Google Cloud spend and period-over-period changes using a profile. Supports GKE allocation when export labels are available; does not estimate bills from kubectl usage or purchase commitments or resize resources.
 license: Apache-2.0
 ---
 
@@ -13,16 +13,16 @@ needs export data access and permission to run jobs in the designated query proj
 gcloud/kubectl are also used for an explicitly requested GKE allocation follow-up.
 BigQuery SELECT jobs can incur cost despite not changing billing resources.
 
-For a supplied offline extract, analyze its confirmed client/project scope using
+For a supplied offline extract, analyze its confirmed profile/project scope using
 decimal arithmetic and state its period/coverage. No live export, credentials or
 query budget is needed for that path. The following prerequisites apply to live
 queries, not to reading supplied evidence.
 
 ## Discover billing scope before querying
 
-Start from the selected client profile and confirmed environment-to-project
-mappings. A supplied profile directory can be used to locate that named client's
-profile without reading other clients. Reuse explicit alias confirmations from
+Start from the selected profile and confirmed environment-to-project
+mappings. A supplied profile directory can be used to locate that named
+profile without reading unrelated profiles. Reuse explicit alias confirmations from
 this session. Ask for missing or ambiguous mappings while continuing discovery
 for resolved environments; do not guess production from a naming pattern.
 
@@ -31,14 +31,15 @@ and perform bounded metadata discovery in confirmed resource projects and any
 explicitly mapped central export projects. Do not ask the user to supply table
 IDs, dataset location or currency that can be discovered. Metadata reads do not
 require a query project, review period or maximum-bytes-billed budget. Finding a
-table does not authorize reading other clients' rows or charging query jobs.
+table does not authorize reading rows outside the confirmed project scope or
+charging query jobs.
 
 Before a query job, establish the full export table ID, dataset location, allowed
 resource projects and designated query project. Resolve only remaining ambiguity
 with the user, reusing any prior authorization. The query project can differ from
-resource projects. A central export can contain other clients; always filter the
-confirmed resource-project set. Discover currency in the scoped result and keep
-currencies separate; no advance currency selection is required.
+resource projects. A central export can contain projects outside the selected
+profile; always filter the confirmed resource-project set. Discover currency in
+the scoped result and keep currencies separate; no advance currency selection is required.
 
 Honor supplied periods and basis. Otherwise state a default of the last seven
 complete UTC usage days versus the preceding seven; do not block on confirmation

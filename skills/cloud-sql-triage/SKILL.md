@@ -1,6 +1,6 @@
 ---
 name: cloud-sql-triage
-description: Inspect a named Google Cloud SQL instance and investigate availability, connection, capacity or replication symptoms using an explicit client profile. Use for managed MySQL, PostgreSQL or SQL Server operations; does not execute application SQL or change the instance.
+description: Inspect a named Google Cloud SQL instance and investigate availability, connection, capacity or replication symptoms using an explicit profile. Use for managed MySQL, PostgreSQL or SQL Server operations; does not execute application SQL or change the instance.
 license: Apache-2.0
 ---
 
@@ -12,7 +12,7 @@ read access; Cloud Monitoring/Logging access only for relevant evidence. The
 initial workflow is control-plane and telemetry inspection, without DB credentials
 or application-data queries. No proxy installation or direct database session.
 
-Resolve client/profile, environment, exact project, instance and incident window.
+Resolve profile, environment, exact project, instance and incident window.
 Get the instance's actual region and databaseVersion from its scoped metadata;
 do not infer engine from its name or choose a cluster to find a managed database.
 For an application connection problem also establish the source workload's
@@ -62,7 +62,7 @@ Select the branch supported by the symptom:
   data. Do not enable instrumentation, run EXPLAIN ANALYZE, terminate sessions or
   execute SQL through this skill. Offer the exact missing diagnostic as a next step.
 
-If backend/log routing is unknown, establish it from client context or return
+If backend/log routing is unknown, establish it from profile context or return
 the evidence gap. Never silently query a different project. Do not apply upstream
 creation/tuning guidance, change flags, resize, promote replicas or alter access.
 

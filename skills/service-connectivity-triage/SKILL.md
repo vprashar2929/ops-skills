@@ -1,6 +1,6 @@
 ---
 name: service-connectivity-triage
-description: Diagnose Kubernetes service reachability, timeouts and HTTP routing failures using Service, EndpointSlice, network policy and Istio evidence with an explicit client profile. Use for a named source-to-destination path; does not provision networking or run traffic probes.
+description: Diagnose Kubernetes service reachability, timeouts and HTTP routing failures using Service, EndpointSlice, network policy and Istio evidence with an explicit profile. Use for a named source-to-destination path; does not provision networking or run traffic probes.
 license: Apache-2.0
 ---
 
@@ -12,7 +12,7 @@ proxy inspection or namespace-scoped analysis. HTTP logs/metrics are optional.
 
 ## Establish the path
 
-Resolve client profile, environment, cluster, source workload/namespace,
+Resolve profile, environment, cluster, source workload/namespace,
 destination namespace and Service or explicit hostname:port, protocol, symptom
 and incident window. Source can be an external client for ingress incidents.
 If the request is only a Service lookup, return its requested configuration;
@@ -20,7 +20,7 @@ do not require a source or claim end-to-end reachability.
 
 Verify cluster identity first. An external destination is not permission to scan
 its network; inspect only explicitly implicated resources. For another cluster,
-verify its identity and client scope separately before reading it.
+verify its identity and profile scope separately before reading it.
 
 ## Trace the smallest implicated path
 
@@ -79,7 +79,7 @@ cause versus alternatives, and the first unverified hop. A valid route or ready
 endpoint is configuration evidence, not proof of a successful request. A 503 alone
 does not identify whether the application, gateway or proxy generated it.
 
-Example: "Use this client profile in dev Apps to investigate HTTP 503 from source
+Example: "Use this profile in dev Apps to investigate HTTP 503 from source
 deployment/frontend to Service orders:8080 in namespace shop over the last 30m."
 
 ## License

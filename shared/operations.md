@@ -1,11 +1,17 @@
 # Operational contract
 
-## Explicit client and target
+## Explicit profile and target
 
 Read the user-supplied profile (or their prior explicit selection in this session).
-Require profile_version: 1, client and environments. Environment keys are exact;
+Require `profile_version: 1`, `profile`, `provider` and `environments`.
+`profile` is a non-empty identifier for the selected set of target mappings.
+Profiles may be organized per user, cluster, environment, or a combination;
+their names do not imply ownership, credentials or authorization. Keep environment
+and resource selections explicit even when a profile covers only one target.
+Unknown versions require clarification rather than guessing their schema.
+Environment keys are exact;
 do not translate nprd/nprod/prod, infer a branch, choose the active project or
-search other client profiles. For Kubernetes provider is gke or kubernetes; cloud
+search other profiles. For Kubernetes provider is gke or kubernetes; cloud
 skills also accept gcp. Resolve environments.<environment>.gcp_project/location
 for GCP and .clusters.<role>.name/kubectl_context for cluster reads. Generic
 Kubernetes additionally requires the maintained expected_api_server per cluster.
@@ -13,10 +19,10 @@ Read profile-linked conventions only when relevant; resolve their paths relative
 to the profile. They are hints, not proof of deployment or current health.
 
 For a managed service, require the exact resource identifier and region/location
-as applicable from the request or client context. A GKE profile can supply its
+as applicable from the request or profile context. A GKE profile can supply its
 GCP project without requiring a Kubernetes namespace or cluster. For a shared
 backend, management cluster, billing query project or destination in a different
-project, require an explicit client mapping/selection; do not assume the workload
+project, require an explicit profile mapping/selection; do not assume the workload
 project owns it. Cloud reads must name the resolved project and applicable
 location. Before any API call, check that a fully qualified resource ID/URL agrees
 with the selected project/location/type; an embedded conflicting project can
@@ -75,7 +81,7 @@ inspection, unless the current request already selects that exact correction.
 Do not treat Forbidden, timeout, partial discovery or empty selectors as a typo.
 Do not fuzzy-substitute deployed references, arbitrary hosts, credentials, image
 tags or configuration values. Missing deployed dependencies remain findings.
-No cross-client, all-project or all-namespace search to work around a failed read.
+No cross-profile, all-project or all-namespace search to work around a failed read.
 
 ## Collection and interpretation
 
