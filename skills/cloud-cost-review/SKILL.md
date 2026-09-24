@@ -1,14 +1,16 @@
 ---
 name: cloud-cost-review
-description: Explain Google Cloud spend and period-over-period changes from an explicitly scoped billing export using a client profile. Supports GKE allocation when export labels are available; does not estimate bills from kubectl usage or purchase commitments or resize resources.
+description: Discover billing exports within confirmed client projects and explain Google Cloud spend and period-over-period changes using a client profile. Supports GKE allocation when export labels are available; does not estimate bills from kubectl usage or purchase commitments or resize resources.
 license: Apache-2.0
 ---
 
 # Cloud cost review
 
-Read [operations](references/operations.md) first. Requires bq and permission to
-read the named export and run bounded query jobs in the designated query project.
-gcloud/kubectl are optional for an explicitly requested GKE allocation follow-up.
+Read [operations](references/operations.md) first. Metadata discovery needs bq
+and permission to list datasets/tables and read their metadata in selected projects;
+gcloud can resolve a selected project's billing-account association. Analysis
+needs export data access and permission to run jobs in the designated query project.
+gcloud/kubectl are also used for an explicitly requested GKE allocation follow-up.
 BigQuery SELECT jobs can incur cost despite not changing billing resources.
 
 For a supplied offline extract, analyze its confirmed client/project scope using
@@ -16,14 +18,33 @@ decimal arithmetic and state its period/coverage. No live export, credentials or
 query budget is needed for that path. The following prerequisites apply to live
 queries, not to reading supplied evidence.
 
-## Establish billing scope before querying
+## Discover billing scope before querying
 
-Require the explicit client profile, allowed resource project IDs, full billing
-table ID, query/billing project, dataset location, period/basis and currency.
-The query project can differ from resource projects. A central billing export can
-contain other clients; always filter the confirmed resource-project set. Missing
-export/access is a prerequisite gap, not zero spend. Do not search all billing
-accounts or enable an export to complete this review.
+Start from the selected client profile and confirmed environment-to-project
+mappings. A supplied profile directory can be used to locate that named client's
+profile without reading other clients. Reuse explicit alias confirmations from
+this session. Ask for missing or ambiguous mappings while continuing discovery
+for resolved environments; do not guess production from a naming pattern.
+
+When export details are missing, read [billing discovery](references/discovery.md)
+and perform bounded metadata discovery in confirmed resource projects and any
+explicitly mapped central export projects. Do not ask the user to supply table
+IDs, dataset location or currency that can be discovered. Metadata reads do not
+require a query project, review period or maximum-bytes-billed budget. Finding a
+table does not authorize reading other clients' rows or charging query jobs.
+
+Before a query job, establish the full export table ID, dataset location, allowed
+resource projects and designated query project. Resolve only remaining ambiguity
+with the user, reusing any prior authorization. The query project can differ from
+resource projects. A central export can contain other clients; always filter the
+confirmed resource-project set. Discover currency in the scoped result and keep
+currencies separate; no advance currency selection is required.
+
+Honor supplied periods and basis. Otherwise state a default of the last seven
+complete UTC usage days versus the preceding seven; do not block on confirmation
+of that default. Report possible export latency even for complete calendar days.
+Missing export/access is a prerequisite gap, not zero spend. Do not search all
+billing accounts or enable an export to complete this review.
 
 Inspect the named table's schema/partition metadata first. Distinguish standard,
 detailed/resource and other export schemas; do not force GKE label queries onto
@@ -62,9 +83,9 @@ only as explicitly modelled estimates with assumptions and coverage. Do not
 claim realised savings, prescribe commitments or apply rightsizing changes.
 Do not alter budgets, exports, labels, IAM, reservations or billing association.
 
-Example: "Use this profile and billing table to compare these two complete UTC
-weeks for this project. Query project/location and maximum bytes billed are
-supplied. Explain the change by service and credits."
+Example: "Use this profile to review staging costs. Discover the export in its
+project; compare the last two complete UTC weeks by service and credits. Use the
+specified query project and maximum bytes billed when supplied."
 
 ## License
 
