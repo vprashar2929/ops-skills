@@ -49,8 +49,8 @@ that mapping from the resource's project.
 
 ## What a useful answer looks like
 
-The following illustrates the healthy local workload lookup exercised with
-synthetic offline evidence in the evaluation. It is not a current cluster report:
+The following illustrates a response to synthetic offline evidence for the local
+lab's healthy workload. It is not a current cluster report:
 
 > At the supplied snapshot time, `skill-lab/deployment/orders-api` has one ready
 > and available replica. Container `web` uses the recorded busybox image digest,

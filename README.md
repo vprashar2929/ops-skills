@@ -162,13 +162,6 @@ packaging, publication against a local bare Git remote, and workload helpers;
 command tests also require bash and jq. [Behavior cases](tests/behavior-cases.md) and [fixtures](tests/fixtures/)
 are separate agent-driven scenarios, not automatically executed unit tests.
 
-For paired trials with and without a skill, use the
-[diagnostic evaluation scaffold](tests/evaluation/README.md). It prepares six
-workload/connectivity cases, captures fresh agent traces, and keeps human-reviewed
-diagnostic results separate from execution and packaging checks.
-The [Codex hard-case study](tests/evaluation/README.md#codex-hard-case-study)
-adds ambiguous failures, ownership and rollback cases with repeated paired runs.
-
 The project is experimental. Broad incident coverage and cross-agent behavioral
 parity are not established. Format and installation checks do not prove diagnostic
 accuracy, production readiness or time savings.
@@ -184,7 +177,7 @@ The source and distribution layouts have separate responsibilities:
 | `upstream/` | Git submodules pinned to exact upstream revisions |
 | `scripts/package_skill.py` | Selection rules and assembly; creates complete skill directories |
 | `scripts/publish_distribution.py` | Publishes the already validated bundle; does not assemble it |
-| `tests/` | Unit, packaging, publication and installer checks, plus evaluation fixtures |
+| `tests/` | Unit, packaging, publication and installer checks, plus manual behavior scenarios |
 | `.github/workflows/distribution.yml` | Coordinates validation and publication |
 | `dist/` | Ignored local build output; never maintained by hand |
 

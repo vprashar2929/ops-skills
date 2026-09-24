@@ -143,6 +143,16 @@ class PackageTests(unittest.TestCase):
                     self.assertEqual([p.relative_to(bundle) for p in bundle.rglob("SKILL.md")],
                                      [Path("SKILL.md")])
                     module.check_links(bundle)
+                    for source in (ROOT / "skills" / skill).rglob("*"):
+                        if source.is_file() and "__pycache__" not in source.parts and source.suffix != ".pyc":
+                            target = bundle / source.relative_to(ROOT / "skills" / skill)
+                            self.assertEqual(target.read_bytes(), source.read_bytes())
+                            self.assertEqual(stat.S_IMODE(target.stat().st_mode),
+                                             stat.S_IMODE(source.stat().st_mode))
+                    self.assertFalse(any(p.is_symlink() or p.name in ("__pycache__", "profile.yaml")
+                                         or p.suffix == ".pyc" for p in bundle.rglob("*")))
+                    with self.assertRaisesRegex(ValueError, "already exists"):
+                        module.package(bundle, skill=skill)
                     for name, consumers in module.SHARED_REFERENCES.items():
                         if skill in consumers:
                             self.assertEqual((bundle / "references" / name).read_bytes(),
@@ -156,6 +166,9 @@ class PackageTests(unittest.TestCase):
                         metadata = json.loads((vendor / "UPSTREAM.json").read_text())
                         self.assertEqual(metadata["revision"], module.git(upstream, "rev-parse", "HEAD"))
                         self.assertEqual(metadata["path"], selected)
+                        self.assertFalse(metadata["modified"])
+                        self.assertEqual(metadata["entrypoint_mapping"],
+                                         {} if label in module.REFERENCE_FILES else {"SKILL.md": "guide.md"})
                         self.assertEqual((vendor / "LICENSE").read_bytes(), (upstream / "LICENSE").read_bytes())
                         for source in (upstream / selected).rglob("*"):
                             if source.is_file():
@@ -204,31 +217,6 @@ class PackageTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "symlinks"):
                 module.package(destination, root=root, skill="delivery-triage")
             self.assertFalse(destination.exists())
-
-    def test_self_contained_and_preserves_upstream(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            destination = module.package(Path(temporary) / "workload-triage")
-            vendor = destination / "references/google-gke-workload"
-            upstream = ROOT / module.SUBMODULE
-            self.assertEqual((vendor / "guide.md").read_bytes(), (upstream / module.SELECTED / "SKILL.md").read_bytes())
-            self.assertEqual((vendor / "LICENSE").read_bytes(), (upstream / "LICENSE").read_bytes())
-            metadata = json.loads((vendor / "UPSTREAM.json").read_text())
-            self.assertEqual(metadata["revision"], module.git(upstream, "rev-parse", "HEAD"))
-            self.assertFalse(metadata["modified"])
-            self.assertEqual(metadata["entrypoint_mapping"], {"SKILL.md": "guide.md"})
-            self.assertEqual(
-                [p.relative_to(destination) for p in destination.rglob("*") if p.name.lower() == "skill.md"],
-                [Path("SKILL.md")],
-            )
-            self.assertTrue((destination / "SKILL.md").is_file())
-            self.assertTrue((destination / "scripts/config_summary.py").is_file())
-            self.assertTrue((destination / "scripts/pod_config_compare.py").is_file())
-            self.assertFalse(any(p.name == "__pycache__" or p.suffix == ".pyc"
-                                 for p in destination.rglob("*")))
-            self.assertFalse(any(p.is_symlink() for p in destination.rglob("*")))
-            self.assertFalse(any(p.name == "profile.yaml" for p in destination.rglob("*")))
-            with self.assertRaisesRegex(ValueError, "already exists"):
-                module.package(destination)
 
     def test_rejects_changed_or_unrecorded_upstream(self):
         # A synthetic repo exercises refusal without changing the real dependency.

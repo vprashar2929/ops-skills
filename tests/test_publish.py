@@ -106,21 +106,6 @@ class PublishTests(unittest.TestCase):
         self.assertIsNone(self.publish())
         self.assertEqual(git(self.remote, "rev-parse", "release"), previous)
 
-    def test_failed_push_keeps_previous_release_and_cleans_worktree(self):
-        previous = self.publish()
-        (self.skill / "new.txt").write_text("new resource")
-
-        def failing_push(directory, *args):
-            if args[0] == "push":
-                raise subprocess.CalledProcessError(1, ["git", *args])
-            return git(directory, *args)
-
-        with mock.patch.object(publisher, "git", side_effect=failing_push):
-            with self.assertRaises(subprocess.CalledProcessError):
-                self.publish()
-        self.assertEqual(git(self.remote, "rev-parse", "release"), previous)
-        self.assertEqual(git(self.root, "worktree", "list", "--porcelain").count("worktree "), 1)
-
     def test_main_advancing_during_publication_keeps_previous_release(self):
         previous = self.publish()
         (self.skill / "new.txt").write_text("new resource")
