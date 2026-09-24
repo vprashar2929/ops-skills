@@ -2,6 +2,7 @@
 name: gke-storage-troubleshooting
 metadata:
   category: Storage
+  version: "1.1.0"
 description: >-
   Diagnoses GKE persistent-storage failures — volume attach/mount errors (Regional PD on optimized VMs, fsGroup mount timeouts), disk-performance and node storage-pressure issues, slow-disk Pod-creation failures, volume-expansion problems, Local SSD / Hyperdisk Storage Pool creation errors, and Cloud Storage FUSE OOM. Use when Pods are stuck in ContainerCreating, volumes fail to attach or mount, or nodes report storage pressure. Don't use for routine storage provisioning or StorageClass/PVC authoring (see the gke-storage skill).
 ---
@@ -121,6 +122,27 @@ are mutually exclusive alternatives, not sequential steps.
         selects a compatible disk type per node and schedules Pods only onto
         nodes that support it. One dynamic StorageClass can then span multiple
         VM generations (requires the GKE versions noted in the docs).
+
+        Example dynamic StorageClass (GKE 1.35.3-gke.1290000+):
+
+        ```yaml
+        apiVersion: storage.k8s.io/v1
+        kind: StorageClass
+        metadata:
+          name: dynamic-volume
+        provisioner: pd.csi.storage.gke.io
+        volumeBindingMode: WaitForFirstConsumer
+        allowVolumeExpansion: true
+        parameters:
+          type: dynamic
+          pd-type: pd-balanced
+          hyperdisk-type: hyperdisk-balanced
+          # Preferred storage on nodes that support both PD and Hyperdisk;
+          # defaults to hyperdisk-type when omitted.
+          disk-type-preference: hyperdisk-type
+          # Best practice: schedule Pods only onto nodes that support the disk type.
+          use-allowed-disk-topology: "true"
+        ```
 
 -   **Mount stops responding due to the `fsGroup` setting**: A Pod configured
     with a `securityContext.fsGroup` on a volume that contains a **large number
