@@ -1,0 +1,95 @@
+# Synthetic offline PromQL checks; no live endpoint or credentials.
+# Run: promtool test rules tests/fixtures/prometheus-queries.test.yml
+# P95 uses a numerical tolerance; NaN is checked by self-inequality.
+evaluation_interval: 1m
+tests:
+- name: documented queries with unrelated production series
+  interval: 1m
+  input_series:
+  - series: http_requests_total{cluster="example-apps",namespace="shop",service="orders",status="200"}
+    values: 0+5700x5
+  - series: http_requests_total{cluster="example-apps",namespace="shop",service="orders",status="500"}
+    values: 0+300x5
+  - series: http_requests_total{cluster="unrelated-prod",namespace="shop",service="orders",status="500"}
+    values: 0+600000x5
+  - series: http_request_duration_seconds_bucket{cluster="example-apps",namespace="shop",service="orders",le="0.1"}
+    values: 0+5400x5
+  - series: http_request_duration_seconds_bucket{cluster="example-apps",namespace="shop",service="orders",le="0.5"}
+    values: 0+6000x5
+  - series: http_request_duration_seconds_bucket{cluster="example-apps",namespace="shop",service="orders",le="+Inf"}
+    values: 0+6000x5
+  - series: up{cluster="example-apps",job="orders"}
+    values: 1+0x5
+  - series: up{cluster="unrelated-prod",job="orders"}
+    values: 0+0x5
+  promql_expr_test:
+  - expr: sum(rate(http_requests_total{cluster="example-apps",namespace="shop",service="orders"}[5m]))
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 100
+  - expr: |-
+      100 * sum(rate(http_requests_total{cluster="example-apps",namespace="shop",service="orders",status=~"5.."}[5m]))
+        / sum(rate(http_requests_total{cluster="example-apps",namespace="shop",service="orders"}[5m]))
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 5
+  - expr: abs((histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{cluster="example-apps",namespace="shop",service="orders"}[5m])))) -
+      0.3) < bool 1e-12
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+  - expr: up{cluster="example-apps",job="orders"}
+    eval_time: 5m
+    exp_samples:
+    - labels: up{cluster="example-apps",job="orders"}
+      value: 1
+- name: absent errors are not measured zero
+  interval: 1m
+  input_series:
+  - series: http_requests_total{cluster="example-apps",namespace="shop",service="orders",status="200"}
+    values: 0+5700x5
+  promql_expr_test:
+  - expr: |-
+      100 * sum(rate(http_requests_total{cluster="example-apps",namespace="shop",service="orders",status=~"5.."}[5m]))
+        / sum(rate(http_requests_total{cluster="example-apps",namespace="shop",service="orders"}[5m]))
+    eval_time: 5m
+    exp_samples: []
+- name: no traffic gives undefined percentage
+  interval: 1m
+  input_series:
+  - series: http_requests_total{cluster="example-apps",namespace="shop",service="orders",status="200"}
+    values: 0+0x5
+  - series: http_requests_total{cluster="example-apps",namespace="shop",service="orders",status="500"}
+    values: 0+0x5
+  promql_expr_test:
+  - expr: |-
+      (100 * sum(rate(http_requests_total{cluster="example-apps",namespace="shop",service="orders",status=~"5.."}[5m]))
+        / sum(rate(http_requests_total{cluster="example-apps",namespace="shop",service="orders"}[5m]))) != bool (100 * sum(rate(http_requests_total{cluster="example-apps",namespace="shop",service="orders",status=~"5.."}[5m]))
+        / sum(rate(http_requests_total{cluster="example-apps",namespace="shop",service="orders"}[5m])))
+    eval_time: 5m
+    exp_samples:
+    - labels: '{}'
+      value: 1
+- name: scoped firing and pending selections
+  interval: 1m
+  input_series:
+  - series: ALERTS{cluster="example-apps",namespace="shop",alertstate="firing",alertname="HighErrors"}
+    values: 1+0x5
+  - series: ALERTS{cluster="example-apps",namespace="shop",alertstate="pending",alertname="HighLatency"}
+    values: 1+0x5
+  - series: ALERTS{cluster="unrelated-prod",namespace="shop",alertstate="firing",alertname="HighErrors"}
+    values: 1+0x5
+  promql_expr_test:
+  - expr: ALERTS{cluster="example-apps",namespace="shop",alertstate="firing"}
+    eval_time: 5m
+    exp_samples:
+    - labels: ALERTS{cluster="example-apps",namespace="shop",alertstate="firing",alertname="HighErrors"}
+      value: 1
+  - expr: ALERTS{cluster="example-apps",namespace="shop",alertstate="pending"}
+    eval_time: 5m
+    exp_samples:
+    - labels: ALERTS{cluster="example-apps",namespace="shop",alertstate="pending",alertname="HighLatency"}
+      value: 1

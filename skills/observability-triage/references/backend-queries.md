@@ -1,7 +1,8 @@
 # Bounded backend queries
 
 For Prometheus use the operator-supplied/verified base URL and existing
-authentication; never embed a token/password in a prompt, URL or saved command.
+authentication when required; never embed a token/password in a prompt, URL or
+saved command.
 Use GET `/api/v1/query` for an instant check or `/api/v1/query_range` with explicit
 start, end and step for a trend. URL-encode the expression using the client rather
 than concatenating untrusted strings. Set HTTP connection/total timeouts. Check

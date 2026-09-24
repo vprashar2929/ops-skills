@@ -38,6 +38,10 @@ SKILLS = {
         google("google-logging", "cloud-logging-query-generation"),
         ("community-mesh-observability", "upstream/wshobson-agents",
          "plugins/cloud-infrastructure/skills/service-mesh-observability"),
+        ("community-prometheus", "upstream/wshobson-agents",
+         "plugins/observability-monitoring/skills/prometheus-configuration"),
+        ("community-grafana", "upstream/wshobson-agents",
+         "plugins/observability-monitoring/skills/grafana-dashboards"),
     ],
     "delivery-triage": [],
     "cloud-sql-triage": [
