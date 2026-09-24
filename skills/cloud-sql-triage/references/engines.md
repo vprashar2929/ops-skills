@@ -32,7 +32,8 @@ Known limitations of the pinned examples, checked against MySQL 8.0 documentatio
   timeouts are not general query execution deadlines.
 - Seconds_Behind_Source=0 does not prove receipt of all source transactions;
   NULL is undefined/unknown. Correlate receiver/applier state, errors and positions
-  or GTIDs. Do not import the upstream five-second alert threshold as client policy.
+  or GTIDs. Do not import the upstream five-second alert threshold as policy for
+  the selected profile.
 
 ### Other engines
 

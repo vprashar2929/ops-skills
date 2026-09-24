@@ -1,6 +1,6 @@
 ---
 name: kafka-triage
-description: Investigate Kafka cluster, consumer-lag and Kafka Connect or MirrorMaker failures using an explicit client profile. Starts with GCP managed Kafka or verified self-managed metadata and telemetry; does not consume messages, reset offsets, restart connectors or change topics.
+description: Investigate Kafka cluster, consumer-lag and Kafka Connect or MirrorMaker failures using an explicit profile. Starts with GCP managed Kafka or verified self-managed metadata and telemetry; does not consume messages, reset offsets, restart connectors or change topics.
 license: Apache-2.0
 ---
 
@@ -11,7 +11,7 @@ Kafka or kubectl for a verified self-managed cluster. Monitoring access and an
 existing approved Kafka/Connect diagnostic client are conditional. Do not install
 a client, retrieve credentials or start a tunnel to manufacture access.
 
-Resolve client/environment, project/location and exact Kafka cluster; include
+Resolve profile/environment, project/location and exact Kafka cluster; include
 Connect cluster/connector, consumer group and topic only when implicated. Identify
 managed Kafka, managed Connect or self-managed Kafka/Connect separately. A Kafka UI
 Deployment is a client, not evidence that the brokers run in its Kubernetes cluster.
@@ -52,7 +52,7 @@ credentials, connection strings and message contents.
   telemetry or supplied sanitized diagnostics. Missing per-task API fields are
   a coverage gap, not a reason to guess a task-status CLI or retrieve configs.
 - **MirrorMaker:** identify source/destination clusters and actual connector/task
-  type. Verify any second project/client mapping separately. Check replication,
+  type. Verify any second project/profile mapping separately. Check replication,
   checkpoints/offset-sync evidence separately; topic existence does not establish
   current replication or failover readiness.
 - **Self-managed:** inspect actual owner, Pod/node/storage events and exposed

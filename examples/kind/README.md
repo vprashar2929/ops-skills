@@ -1,7 +1,7 @@
 # First live diagnosis with Codex
 
 A disposable, single-node cluster for exercising `workload-triage` and
-`service-connectivity-triage` without client infrastructure. The profile contains
+`service-connectivity-triage` without external infrastructure. The profile contains
 only synthetic local identifiers. It uses the existing `provider: kubernetes`
 contract; no GCP project or authentication is needed.
 
@@ -110,7 +110,7 @@ Use only ./kubeconfig and the supplied profile.
 Diagnose deployment/worker-api in namespace skill-lab using live status,
 events and bounded current/previous logs. Explain the supported cause and
 smallest useful next step. State evidence gaps. Read-only; do not print secrets.
-Do not read setup manifests, the source checkout, other client profiles or
+Do not read setup manifests, the source checkout, other profiles or
 evaluator files. Do not change resources or switch global contexts.
 ```
 

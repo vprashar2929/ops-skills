@@ -5,11 +5,11 @@ not live observations. Use the specified skill and answer the operator's request
 from these artifacts only. Do not contact a cluster, cloud project or HTTP endpoint.
 If additional evidence is needed, describe it rather than execute a command.
 
-Explicit client profile for every case:
+Explicit profile for every case:
 
 ```yaml
 profile_version: 1
-client: example-client
+profile: example-profile
 provider: gke
 environments:
   staging:
@@ -114,7 +114,7 @@ The extract covers usage_start_time in [2026-09-01T00:00:00Z,
   {"project":"example-staging-project","currency":"USD","cost":"100.00","credits":["-10.00","-5.00"]},
   {"project":"example-staging-project","currency":"USD","cost":"50.00","credits":[]},
   {"project":"example-staging-project","currency":"EUR","cost":"20.00","credits":["-2.00"]},
-  {"project":"different-client-project","currency":"USD","cost":"900.00","credits":[]}
+  {"project":"out-of-scope-project","currency":"USD","cost":"900.00","credits":[]}
 ]
 ```
 

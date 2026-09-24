@@ -1,6 +1,6 @@
 # Synthetic template for managed services; no Kubernetes cluster is required.
 profile_version: 1
-client: example-client
+profile: example-profile
 provider: gcp
 environments:
   staging:

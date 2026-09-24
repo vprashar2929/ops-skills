@@ -3,7 +3,7 @@
 Help the operator correct misspellings without silently changing the target.
 This applies to namespaces, built-in and custom resource types, resource object
 names, containers, referenced key names and requested Kubernetes schema fields.
-Use client profile keys for environment/cluster-role suggestions. It does not
+Use profile keys for environment/cluster-role suggestions. It does not
 turn a missing dependency or a value in a deployed specification into a typo.
 
 ## Establish what failed
@@ -18,10 +18,10 @@ turn a missing dependency or a value in a deployed specification into a typo.
 - Authentication failures, Forbidden, DNS failures and timeouts are access gaps,
   not spelling evidence. An empty selector result is not proof of a typo either.
   Do not retry with guessed identities, wider permissions or different clusters.
-- Verify the cluster identity before Kubernetes discovery. If a client/environment/
+- Verify the cluster identity before Kubernetes discovery. If a profile/environment/
   cluster-role identifier is unknown, suggest only keys in the explicitly supplied
   profile and obtain a selection before contacting the proposed cluster. Do not
-  search other client profiles or guess project IDs, endpoints or profile paths.
+  search other profiles or guess project IDs, endpoints or profile paths.
 
 ## Discover within the smallest relevant scope
 
@@ -104,7 +104,7 @@ That namespace contains Deployment `orders-api`. Should I inspect it?”
 Even one plausible match needs confirmation before changing the target. If the
 user's current request already explicitly selects the exact corrected target,
 proceed without asking again. After confirmation, reuse that selection within
-this conversation and target; do not carry it across clients or clusters. A later
+this conversation and target; do not carry it across profiles or clusters. A later
 NotFound may reflect deletion or replacement, not another spelling error.
 
 If the wrong name comes from a deployed reference, report the broken reference

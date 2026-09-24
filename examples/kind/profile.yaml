@@ -1,5 +1,5 @@
 profile_version: 1
-client: local-kind
+profile: local-kind
 provider: kubernetes
 environments:
   local:

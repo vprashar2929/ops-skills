@@ -65,7 +65,7 @@ class ConfigSummaryTests(unittest.TestCase):
 
     def test_namespace_mismatch_does_not_compare(self):
         document = fixture()
-        document["items"][0]["metadata"]["namespace"] = "other-client"
+        document["items"][0]["metadata"]["namespace"] = "other-namespace"
         self.assertEqual(module.summarize(document)["objects"][1]["targetKeyComparison"]["status"],
                          "not-collected")
 

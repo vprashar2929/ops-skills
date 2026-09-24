@@ -9,7 +9,7 @@ Explicit profile:
 
 ```yaml
 profile_version: 1
-client: example-client
+profile: example-profile
 provider: gcp
 environments:
   staging:

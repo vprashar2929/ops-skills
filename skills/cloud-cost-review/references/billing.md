@@ -20,7 +20,7 @@ GROUP BY project_id, service, currency
 ORDER BY net_cost DESC
 ```
 
-The placeholders are inputs, not an actual client table. Apply a correct
+The placeholders are inputs, not an actual export table. Apply a correct
 partition predicate for the discovered schema without silently dropping late
 arrivals; dry-run if scan pruning is uncertain. For invoice reconciliation use
 invoice.month intentionally and explain delayed corrections and projectless
@@ -51,7 +51,7 @@ Accounting checks: net = gross + signed credits for each currency; breakdowns
 reconcile to the same filtered scope; empty credits preserve the base row;
 multiple credits do not duplicate cost; missing allocation remains visible.
 Use decimal arithmetic for supplied offline extracts as well. Suppress raw labels
-containing client-sensitive identifiers from shared reports.
+containing sensitive identifiers from shared reports.
 
 Source: [Cloud Billing example queries](https://cloud.google.com/billing/docs/how-to/bq-examples),
 [partition pruning](https://docs.cloud.google.com/bigquery/docs/querying-partitioned-tables),
