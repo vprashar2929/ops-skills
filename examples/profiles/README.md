@@ -65,4 +65,4 @@ and the smallest useful next check. A blocked read should produce an access gap,
 not an empty inventory or a health claim.
 
 Full contracts: [Kubernetes targeting](../../skills/workload-triage/references/targeting.md)
-and [managed-service operations](../../skills/cloud-sql-triage/references/operations.md).
+and [managed-service operations](../../shared/operations.md).

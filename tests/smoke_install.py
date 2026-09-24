@@ -48,5 +48,5 @@ def smoke_install(distribution):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("distribution", type=Path, help="Repository or optional bundle root")
+    parser.add_argument("distribution", type=Path, help="Assembled bundle or checkout of the release branch")
     smoke_install(parser.parse_args().distribution)
