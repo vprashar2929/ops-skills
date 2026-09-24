@@ -4,6 +4,7 @@ Portable [Agent Skills](https://agentskills.io/) for Kubernetes and Google Cloud
 operations. Inspect resources, investigate symptoms and return evidence with next
 steps. Use explicit client profiles and existing CLI/API access; profiles and
 credentials stay outside the repository. The skills do not perform remediation.
+For Prometheus HTTP queries, a supplied endpoint URL is sufficient; no profile is required.
 
 ## Quick start
 
@@ -97,7 +98,7 @@ Build destinations must be new; the packager refuses overwrites.
 | [workload-triage](skills/workload-triage/SKILL.md) | Namespaces, workload status, logs and configuration references |
 | [service-connectivity-triage](skills/service-connectivity-triage/SKILL.md) | Service endpoints, network policies and Istio routing |
 | [gke-cluster-triage](skills/gke-cluster-triage/SKILL.md) | Nodes, scheduling capacity, autoscaling and storage |
-| [observability-triage](skills/observability-triage/SKILL.md) | Missing metrics/logs, scrape failures and alerts |
+| [observability-triage](skills/observability-triage/SKILL.md) | Prometheus alert/metric queries, signal discovery, scrape failures and missing logs |
 | [delivery-triage](skills/delivery-triage/SKILL.md) | Pipeline failures, Helm releases and Argo CD reconciliation |
 | [cloud-sql-triage](skills/cloud-sql-triage/SKILL.md) | Managed database availability, connections and resource pressure |
 | [redis-triage](skills/redis-triage/SKILL.md) | Redis connections, memory, evictions and replication |
@@ -114,7 +115,7 @@ skill's operational boundaries.
 | --- | --- | --- |
 | [google/skills](https://github.com/google/skills) | GKE, Monitoring, Logging and cost | Apache-2.0 |
 | [redis/agent-skills](https://github.com/redis/agent-skills) | Connections, observability and clustering | MIT |
-| [wshobson/agents](https://github.com/wshobson/agents) | Istio traffic and mesh observability | MIT |
+| [wshobson/agents](https://github.com/wshobson/agents) | Istio traffic, mesh observability, Prometheus and Grafana metric patterns | MIT |
 | [planetscale/database-skills](https://github.com/planetscale/database-skills) | Selected MySQL diagnostics | MIT |
 
 The submodule gitlinks pin the upstream revisions. Selections live in
@@ -159,8 +160,19 @@ python3 -m unittest discover -s tests -v
 
 The suite requires Python 3.9+, Git and the initialized pinned submodules. It covers
 packaging, publication against a local bare Git remote, and workload helpers;
-command tests also require bash and jq. [Behavior cases](tests/behavior-cases.md) and [fixtures](tests/fixtures/)
+command tests also require bash and jq. [Behavior cases](tests/behavior-cases.md)
+and [Markdown fixtures](tests/fixtures/)
 are separate agent-driven scenarios, not automatically executed unit tests.
+
+The synthetic [PromQL query fixture](tests/fixtures/prometheus-queries.test.yml)
+is executable with `promtool` (tested with 3.5.0), without a running server:
+
+```bash
+promtool test rules tests/fixtures/prometheus-queries.test.yml
+```
+
+This optional check covers query results and edge cases; it does not test HTTP
+access or agent behavior and is not part of the Python suite or current CI job.
 
 The project is experimental. Broad incident coverage and cross-agent behavioral
 parity are not established. Format and installation checks do not prove diagnostic
