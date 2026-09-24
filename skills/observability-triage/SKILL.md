@@ -1,13 +1,13 @@
 ---
 name: observability-triage
-description: Query Prometheus alerts and metrics, discover available signals, and investigate scrape failures, alert behaviour or missing Cloud Logging data. Use a supplied endpoint for Prometheus HTTP queries; use a client profile for Kubernetes/cloud inspection. Read-only; does not install monitoring or change alert rules.
+description: Query Prometheus alerts and metrics, discover available signals, and investigate scrape failures, alert behaviour or missing Cloud Logging data. Use a supplied endpoint for Prometheus HTTP queries; use a profile for Kubernetes/cloud inspection. Read-only; does not install monitoring or change alert rules.
 license: Apache-2.0
 ---
 
 # Observability triage
 
 Read [operations](references/operations.md) before collection. For Prometheus
-HTTP queries, a supplied endpoint URL is sufficient; no client profile is required.
+HTTP queries, a supplied endpoint URL is sufficient; no profile is required.
 Related Kubernetes/cloud reads still require a profile. Do not infer those targets
 from the endpoint hostname.
 
@@ -17,7 +17,7 @@ port-forward or print access tokens to obtain access.
 
 Resolve the selected backend, resource or instance scope, signal and UTC window.
 For other backends, obtain the Cloud Monitoring scoping project / Logging view
-from supplied client context or verified configuration. A Kubernetes namespace
+from supplied profile context or verified configuration. A Kubernetes namespace
 named prometheus or gmp-system does not establish the query backend. Monitoring,
 logging and traces may use different projects and systems.
 
@@ -66,8 +66,9 @@ Follow only the relevant branches below.
    examples are not diagnostic prerequisites or permission to change the mesh.
 
 Use metric type, unit, kind and labels from discovery. Apply rates to appropriate
-counters and histogram handling to the actual schema; do not aggregate across
-clients/clusters accidentally. Investigate stale series and resets before
+counters and histogram handling to the actual schema. Keep aggregation within
+the selected backend/resource scope using verified labels; do not assume a
+profile name exists as a metric label. Investigate stale series and resets before
 attributing a trend. Alert thresholds come from the deployed policy or user SLO,
 not an upstream example's arbitrary percentage.
 

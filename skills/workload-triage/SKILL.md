@@ -1,6 +1,6 @@
 ---
 name: workload-triage
-description: List Kubernetes namespaces, resolve misspelled resource identifiers including custom resources, inspect workload configuration, or investigate rollout, log, and configuration failures using an explicitly supplied client profile. Return evidence and proposed next steps without changing the environment.
+description: List Kubernetes namespaces, resolve misspelled resource identifiers including custom resources, inspect workload configuration, or investigate rollout, log, and configuration failures using an explicitly supplied profile. Return evidence and proposed next steps without changing the environment.
 license: Apache-2.0
 ---
 
@@ -17,13 +17,14 @@ that use them. Supplied offline evidence can be analyzed without live access.
 
 ## Resolve the target
 
-Read the explicitly supplied client profile and
+Read the explicitly supplied profile and
 [targeting.md](references/targeting.md) before contacting a cluster. For namespace
-listing, resolve the client, environment and cluster; no namespace or workload
+listing, resolve the profile, environment and cluster; no namespace or workload
 is required. For workload inspection, also resolve namespace, workload kind/name,
 and any incident time window from the request. A profile supplies mappings and
 context, not authorization.
-Do not pick a client from the working directory or reuse another client's profile.
+Do not pick a profile from the working directory or reuse a different profile
+without selection.
 For other resource inspections, including custom resources, resolve the served
 API type and scope using identifier-recovery.md; require a namespace only for
 namespaced resources.
@@ -66,8 +67,8 @@ contexts or automatically fetch credentials. State the resolved target briefly.
   adaptations; do not execute its workflow wholesale. A simple spec lookup
   does not need the GKE troubleshooting reference.
 - Read additional profile references only when relevant. Resolve their paths
-  relative to the profile. They describe client conventions and source locations;
-  verify deployed ownership and revisions before attributing a live failure.
+  relative to the profile. They describe conventions and source locations for
+  that profile; verify deployed ownership and revisions before attributing a live failure.
 
 Use native tools already available to the agent; no additional collection service
 is required. Discover actual selectors, controller

@@ -1,6 +1,6 @@
 # Discover an existing billing export
 
-Use this path when the client and at least one resource project are confirmed but
+Use this path when the profile and at least one resource project are confirmed but
 the export is unknown. Reuse supplied export settings instead of rediscovering
 them. Discovery is metadata-only: no SELECT, table preview, row reads, resource
 creation, API enablement or credential changes. Use existing authentication,
@@ -38,7 +38,7 @@ partition, size and modification metadata from table inspection. Do not dump
 dataset ACLs or arbitrary descriptions/labels. Check the installed bq help for
 pagination flags; continue within a declared bound or report incomplete discovery.
 Use relevant dataset names as hints, not proof of billing content. A linked
-dataset or view referring outside the selected projects needs an explicit client
+dataset or view referring outside the selected projects needs an explicit profile
 mapping before following that reference or querying it.
 
 Recognize standard `gcp_billing_export_v1_*` and detailed
@@ -56,7 +56,7 @@ time do not establish period coverage or the presence of a particular project.
 
 No visible candidate means only that none was found in the inspected scope with
 current permissions. Exports can live in a central project. Ask for that project's
-client mapping or the existing destination shown in Cloud Billing's Billing
+profile mapping or the existing destination shown in Cloud Billing's Billing
 export page; do not scan all accessible projects/accounts. If access is unavailable,
 offer analysis of a user-supplied billing extract with confirmed scope/coverage.
 
@@ -64,7 +64,7 @@ offer analysis of a user-supplied billing extract with confirmed scope/coverage.
 
 Return discovered table IDs, location, schema type, partitioning and access gaps.
 Reuse a designated query project from the profile/session. If absent, propose a
-confirmed client project and ask which project should pay for jobs; the export's
+confirmed profile project and ask which project should pay for jobs; the export's
 location or the active gcloud default does not establish that choice. Combine
 this with unresolved target/source questions instead of repeated prerequisites.
 
@@ -72,7 +72,7 @@ Use the supplied period or the SKILL.md default. Derive currency by grouping the
 resource- and time-filtered result; do not run an unfiltered distinct-currency or
 project-inventory query. Then follow the billing reference: dry-run the actual
 query in the designated project/location and reuse an existing bytes ceiling or
-request one with the estimate before executing. Keep discovered client details
+request one with the estimate before executing. Keep discovered profile details
 outside the reusable package; only update a private profile when requested.
 
 Sources checked 2026-09-24: [project billing info](https://docs.cloud.google.com/sdk/gcloud/reference/billing/projects/describe),
