@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/google/skills",
-  "revision": "2a1e4549d591688f3a605771cf101d05d43f8ae8",
+  "revision": "f566651a2f60aecbc4654f8868fb239f85a783f6",
   "path": "skills/cloud/gke-node-notready",
   "modified": false,
   "entrypoint_mapping": {
