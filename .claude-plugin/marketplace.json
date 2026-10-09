@@ -1,0 +1,15 @@
+{
+  "name": "ops-skills",
+  "owner": {
+    "name": "Vibhu Prashar",
+    "url": "https://github.com/vprashar2929"
+  },
+  "description": "Skills for Kubernetes and Google Cloud operational diagnosis.",
+  "plugins": [
+    {
+      "name": "ops-triage",
+      "description": "Inspect Kubernetes and Google Cloud resources, investigate operational symptoms, and return evidence with proposed next steps.",
+      "source": "./"
+    }
+  ]
+}

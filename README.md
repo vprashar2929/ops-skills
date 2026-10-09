@@ -2,7 +2,19 @@
 
 Generated skills with pinned upstream references. Edit the source branch, not this distribution. SOURCE.json records the source commit and whether it included uncommitted changes.
 
-Install with Node.js 22.20+ and Git:
+Install all nine skills as the ops-triage plugin:
+
+```bash
+codex plugin marketplace add vprashar2929/ops-skills --ref release
+codex plugin add ops-triage@ops-skills
+
+claude plugin marketplace add 'vprashar2929/ops-skills#release'
+claude plugin install ops-triage@ops-skills
+```
+
+Invoke $ops-triage:workload-triage in Codex or /ops-triage:workload-triage in Claude Code. Use one installation route per agent.
+
+For individual skills, install with Node.js 22.20+ and Git:
 
 ```bash
 npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release --skill workload-triage --agent codex claude-code

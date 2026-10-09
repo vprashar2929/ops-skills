@@ -1,0 +1,13 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "ops-triage",
+  "version": "0.1.0",
+  "description": "Inspect Kubernetes and Google Cloud resources, investigate operational symptoms, and return evidence with proposed next steps.",
+  "author": {
+    "name": "Vibhu Prashar",
+    "url": "https://github.com/vprashar2929"
+  },
+  "homepage": "https://github.com/vprashar2929/ops-skills",
+  "repository": "https://github.com/vprashar2929/ops-skills",
+  "license": "Apache-2.0"
+}
