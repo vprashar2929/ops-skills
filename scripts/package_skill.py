@@ -9,6 +9,7 @@ import shutil
 import subprocess
 import tempfile
 
+from plugin_metadata import package_metadata
 
 ROOT = Path(__file__).resolve().parents[1]
 SUBMODULE = "upstream/google-skills"
@@ -121,7 +122,7 @@ def package(destination, root=ROOT, skill="workload-triage"):
     destination = Path(destination).absolute()
     if destination.exists() or destination.is_symlink():
         raise ValueError(f"Destination already exists; choose a new directory: {destination}")
-    for source in (root / "skills", root / "shared", root / "upstream", root / "scripts", root / "tests", root / ".git"):
+    for source in (root / "skills", root / "shared", root / "upstream", root / "scripts", root / "tests", root / "packaging", root / ".git"):
         if destination.resolve().is_relative_to(source.resolve()):
             raise ValueError("Destination must be outside source and Git metadata directories")
 
@@ -197,11 +198,11 @@ def package(destination, root=ROOT, skill="workload-triage"):
 
 
 def package_distribution(destination, root=ROOT):
-    """Build only complete skills and source metadata; never overwrite a build."""
+    """Build complete skills, plugin metadata and catalogs; never overwrite a build."""
     destination = Path(destination).absolute()
     if destination.exists() or destination.is_symlink():
         raise ValueError(f"Destination already exists; choose a new directory: {destination}")
-    for source in (root / "skills", root / "shared", root / "upstream", root / "scripts", root / "tests", root / ".git"):
+    for source in (root / "skills", root / "shared", root / "upstream", root / "scripts", root / "tests", root / "packaging", root / ".git"):
         if destination.resolve().is_relative_to(source.resolve()):
             raise ValueError("Destination must be outside source and Git metadata directories")
     source_skills = {p.parent.name for p in (root / "skills").glob("*/SKILL.md")}
@@ -217,6 +218,7 @@ def package_distribution(destination, root=ROOT):
         staged = Path(temporary) / "distribution"
         for skill in SKILLS:
             package(staged / "skills" / skill, root=root, skill=skill)
+        package_metadata(root / "packaging", staged)
         (staged / "SOURCE.json").write_text(json.dumps({
             "commit": revision, "dirty": dirty, "skills": sorted(SKILLS),
         }, indent=2) + "\n")
@@ -225,7 +227,16 @@ def package_distribution(destination, root=ROOT):
             "Generated skills with pinned upstream references. Edit the source branch, "
             "not this distribution. SOURCE.json records the source commit "
             "and whether it included uncommitted changes.\n\n"
-            "Install with Node.js 22.20+ and Git:\n\n"
+            "Install all nine skills as the ops-triage plugin:\n\n"
+            "```bash\n"
+            "codex plugin marketplace add vprashar2929/ops-skills --ref release\n"
+            "codex plugin add ops-triage@ops-skills\n\n"
+            "claude plugin marketplace add 'vprashar2929/ops-skills#release'\n"
+            "claude plugin install ops-triage@ops-skills\n"
+            "```\n\n"
+            "Invoke $ops-triage:workload-triage in Codex or "
+            "/ops-triage:workload-triage in Claude Code. Use one installation route per agent.\n\n"
+            "For individual skills, install with Node.js 22.20+ and Git:\n\n"
             "```bash\n"
             "npx skills@1.7.0 add https://github.com/vprashar2929/ops-skills/tree/release "
             "--skill workload-triage --agent codex claude-code\n"

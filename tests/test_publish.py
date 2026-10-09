@@ -12,6 +12,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import publish_distribution as publisher
 from package_skill import git
+from plugin_metadata import manifests, package_metadata
 
 
 class PublishTests(unittest.TestCase):
@@ -75,6 +76,38 @@ class PublishTests(unittest.TestCase):
         self.assertNotIn("old.txt", git(self.remote, "ls-tree", "-r", "--name-only", "release"))
         self.assertEqual(git(self.remote, "show", f"{previous}:skills/example/old.txt"), "old resource")
 
+    def test_plugin_publication_requires_a_version_bump_and_preserves_previous_release(self):
+        package_metadata(Path(__file__).resolve().parents[1] / "packaging", self.bundle)
+        previous = self.publish()
+        (self.root / "authored.txt").write_text("updated source\n")
+        self.commit = self.commit_source()
+        git(self.root, "push", "origin", "main")
+        self.write_provenance()
+        previous = self.publish()  # Provenance-only changes keep the plugin version.
+        (self.skill / "old.txt").write_text("updated resource")
+        with self.assertRaisesRegex(ValueError, "without a version bump"):
+            self.publish()
+        self.assertEqual(git(self.remote, "rev-parse", "release"), previous)
+        portable = json.loads((self.bundle / "plugin.json").read_text())
+        major, minor, patch = map(int, portable["version"].split("."))
+        portable["version"] = f"{major}.{minor}.{patch + 1}"
+        for relative, content in manifests(portable).items():
+            (self.bundle / relative).write_text(json.dumps(content, indent=2) + "\n")
+        revision = self.publish()
+        self.assertEqual(git(self.remote, "rev-parse", "release"), revision)
+        self.assertEqual(git(self.remote, "show", "release:skills/example/old.txt"), "updated resource")
+
+    def test_plugin_publication_refuses_inconsistent_host_metadata(self):
+        package_metadata(Path(__file__).resolve().parents[1] / "packaging", self.bundle)
+        previous = self.publish()
+        path = self.bundle / ".claude-plugin/plugin.json"
+        value = json.loads(path.read_text())
+        value["version"] = "999.0.0"
+        path.write_text(json.dumps(value))
+        with self.assertRaisesRegex(ValueError, "metadata differs"):
+            self.publish()
+        self.assertEqual(git(self.remote, "rev-parse", "release"), previous)
+
     def test_publication_keeps_validated_files_despite_gitignore(self):
         (self.skill / ".gitignore").write_text("old.txt\n")
         self.publish()
@@ -129,7 +162,7 @@ class PublishTests(unittest.TestCase):
         previous = self.publish()
         scripts = self.root / "scripts"
         scripts.mkdir()
-        for name in ("publish_distribution.py", "package_skill.py"):
+        for name in ("publish_distribution.py", "package_skill.py", "plugin_metadata.py"):
             shutil.copy2(Path(publisher.__file__).parent / name, scripts / name)
         self.commit = self.commit_source()
         git(self.root, "push", "origin", "main")
