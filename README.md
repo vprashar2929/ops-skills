@@ -12,7 +12,27 @@ New to this repo? Start with the [Codex local-lab walkthrough](examples/kind/REA
 It takes you from prerequisites to a live diagnosis and cleanup without cloud
 credentials. Use the installation below when you already have a target environment.
 
-Requires Git and Node.js 22.20+. Install the validated distribution from `release`:
+Install all nine skills as the `ops-triage` plugin from our GitHub marketplace.
+Use Git and a CLI version with native plugin support. CI checks Codex CLI
+`0.160.1` and Claude Code `2.1.178`; older versions have not been tested.
+
+```bash
+# Codex CLI
+codex plugin marketplace add vprashar2929/ops-skills --ref release
+codex plugin add ops-triage@ops-skills
+
+# Claude Code CLI
+claude plugin marketplace add 'vprashar2929/ops-skills#release'
+claude plugin install ops-triage@ops-skills
+```
+
+These commands require a published `release` containing the plugin metadata.
+For a local trial before publication, build a bundle as described below and
+replace the marketplace source with its absolute directory path.
+Plugin installation uses the same complete skills for both agents.
+
+For individual skills, the existing installer remains available. It requires Git
+and Node.js 22.20+. Install the validated distribution from `release`:
 
 ```bash
 # Choose skills and agents interactively
@@ -51,7 +71,10 @@ Open your agent, select the skill and supply your task:
 | [Codex CLI / IDE](https://learn.chatgpt.com/docs/build-skills) | Type `$workload-triage`, or select it using `/skills` |
 | [Claude Code](https://code.claude.com/docs/en/skills) | Type `/workload-triage` |
 
-For example, in Codex (replace the first line with `/workload-triage` in Claude Code):
+For plugin installations, use `$ops-triage:workload-triage` in Codex or
+`/ops-triage:workload-triage` in Claude Code; the table uses standalone skill names.
+For example, with the individual-skill installation in Codex (replace the first
+line with `/workload-triage` in Claude Code):
 
 ```text
 $workload-triage
@@ -68,6 +91,29 @@ agents have their own discovery paths and invocation syntax; `/skills` is not a
 universal command. Keep the complete skill directory, including its references and scripts.
 Skill instructions do not enforce permissions or redact tool output; use
 appropriately scoped access. Billing queries may incur charges.
+
+Use one installation route per agent. When migrating, back up standalone skill
+directories before removing their copies or links. Retain shared copies still
+used by another agent, then install the plugin and confirm its nine skills appear.
+
+To receive a new plugin version:
+
+```bash
+codex plugin marketplace upgrade ops-skills
+codex plugin add ops-triage@ops-skills
+
+claude plugin marketplace update ops-skills
+claude plugin update ops-triage@ops-skills
+```
+
+Start a new session after updating. To uninstall, run
+`codex plugin remove ops-triage@ops-skills` or
+`claude plugin uninstall ops-triage@ops-skills`.
+Before updating, retain the previously tested bundle or its distribution commit.
+The tested Codex version removes the previous cached plugin on upgrade.
+To roll back, uninstall, remove the marketplace registration, and add a retained
+bundle or pin a previous distribution commit with Codex's `--ref <sha>` or Claude's
+`#<sha>` source before reinstalling.
 
 <details>
 <summary>Local development, manual installation and fixed revisions</summary>
@@ -188,6 +234,7 @@ The source and distribution layouts have separate responsibilities:
 | --- | --- |
 | `skills/<name>/` | Authored skill instructions, scripts and local references; build inputs |
 | `shared/` | Authored references maintained once and copied into selected skills |
+| `packaging/plugin.json` | Shared plugin identity and version; host manifests/catalogs are generated |
 | `upstream/` | Git submodules pinned to exact upstream revisions |
 | `scripts/package_skill.py` | Selection rules and assembly; creates complete skill directories |
 | `scripts/publish_distribution.py` | Publishes the already validated bundle; does not assemble it |
@@ -201,6 +248,13 @@ tests and submodules are excluded. `SOURCE.json` identifies the source commit;
 each upstream reference has `UPSTREAM.json` recording its origin and selection.
 Edit sources on `main`; `release` is generated. The bare `owner/repo` installer
 shorthand selects `main`, so use the explicit `/tree/release` URL.
+The distribution root also contains portable `plugin.json`, a generated Claude
+manifest, and native marketplace catalogs under `.agents/plugins/` and
+`.claude-plugin/`. Both catalogs point at the distribution root. There is one
+copy of each skill; native plugins and individual-skill installations share it.
+This follows [OpenAI's portable plugin guide](https://developers.openai.com/plugins/build/plugins)
+and [Claude's marketplace format](https://code.claude.com/docs/en/plugins/marketplace-reference).
+Plugin packaging is separate from the Agent Skills format.
 
 Edit [the shared operational contract](shared/operations.md) once; the packager
 includes it in each selected skill. Installed skills remain self-contained.
@@ -215,6 +269,16 @@ official `skills-ref`, checks packaged links, and tests real CLI installations o
 the bundle for Codex and Claude Code in copy and symlink modes. The archive retains
 script permissions, upstream licenses and provenance. PR artifacts are available
 for review; they are never published as releases.
+It also checks native Git marketplace installation and one cached update in both
+CLIs, including skill discovery, installed bytes/permissions, packaged links and
+official installed-skill validation. Claude metadata is validated strictly.
+These checks use a local Git remote and do not establish model behavior.
+
+Keep the plugin name stable. Our release policy uses numeric `MAJOR.MINOR.PATCH`
+versions in `packaging/plugin.json`, bumped when changing the distributed payload.
+The publisher rejects changes without a version bump and decreasing versions;
+source-only `SOURCE.json` changes are exempt. Publish shared rollbacks as a new,
+increasing version, as described in [Claude's update guidance](https://code.claude.com/docs/en/plugins/host-marketplace#release-a-new-version).
 
 After a successful `main` build, a separate job with `contents: write` publishes
 that same validated artifact using [the publisher](scripts/publish_distribution.py).
@@ -230,6 +294,11 @@ Use the workflow's manual trigger on `main` to retry publication. After deployin
 the workflow, confirm that `release`'s `SOURCE.json` records the intended source
 commit before installing it. Local development uses the same packager and installs
 from `dist/bundle`; moving a checkout is not an installation update.
+
+Vendor directory listings require separate submissions through
+[OpenAI](https://developers.openai.com/plugins/deploy/submission) and
+[Anthropic](https://code.claude.com/docs/en/plugins/publish); publishing this Git
+marketplace does not submit to either directory.
 
 ## License
 

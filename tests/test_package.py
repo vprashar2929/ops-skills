@@ -86,7 +86,7 @@ class PackageTests(unittest.TestCase):
             destination = module.package_distribution(Path(temporary) / "bundle")
             legal_files = {name for name in ("LICENSE", "NOTICE") if (ROOT / name).is_file()}
             self.assertEqual({p.name for p in destination.iterdir()},
-                             {"skills", "README.md", "SOURCE.json"} | legal_files)
+                             {"skills", "README.md", "SOURCE.json", "plugin.json", ".agents", ".claude-plugin"} | legal_files)
             self.assertEqual({p.name for p in (destination / "skills").iterdir()}, set(module.SKILLS))
             source = json.loads((destination / "SOURCE.json").read_text())
             self.assertEqual(source["commit"], module.git(ROOT, "rev-parse", "HEAD"))

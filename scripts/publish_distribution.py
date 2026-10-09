@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 
 from package_skill import ROOT, git, reject_symlinks
+from plugin_metadata import check_metadata, check_version_upgrade
 
 
 def verify_staged_bundle(checkout, bundle):
@@ -37,6 +38,8 @@ def publish(bundle, source_commit, root=ROOT):
     provenance = json.loads((bundle / "SOURCE.json").read_text())
     if provenance["commit"] != source_commit or provenance["dirty"] is not False:
         raise ValueError("Bundle must come from the expected clean source commit")
+    if (bundle / "plugin.json").is_file():
+        check_metadata(bundle)
 
     # Only trusted main builds call this script. PR artifacts are never published.
     git(root, "fetch", "origin", "refs/heads/main")
@@ -55,6 +58,8 @@ def publish(bundle, source_commit, root=ROOT):
         branch = Path(temporary).name
         git(root, "worktree", "add", "--detach", str(checkout), parent)
         try:
+            if remote_release:
+                check_version_upgrade(checkout, bundle)
             if not remote_release:
                 git(checkout, "checkout", "--orphan", branch)
             git(checkout, "rm", "-r", "-f", "--ignore-unmatch", ".")
