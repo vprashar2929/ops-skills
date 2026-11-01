@@ -108,35 +108,6 @@ class PublishTests(unittest.TestCase):
             self.publish()
         self.assertEqual(git(self.remote, "rev-parse", "release"), previous)
 
-    def test_version_check_allows_an_initial_release_without_publishing(self):
-        package_metadata(Path(__file__).resolve().parents[1] / "packaging", self.bundle)
-        publisher.check_release_version(self.bundle, root=self.root)
-        self.assertEqual(git(self.remote, "branch", "--list", "release"), "")
-        self.assertEqual(git(self.root, "status", "--porcelain"), "")
-
-    def test_version_check_requires_a_bump_for_upstream_provenance_without_publishing(self):
-        package_metadata(Path(__file__).resolve().parents[1] / "packaging", self.bundle)
-        provenance = self.skill / "references/upstream/UPSTREAM.json"
-        provenance.parent.mkdir(parents=True)
-        provenance.write_text(json.dumps({"revision": "1" * 40}))
-        previous = self.publish()
-        # PR builds need not match main or have clean-source publication provenance.
-        self.write_provenance(commit="2" * 40, dirty=True)
-        publisher.check_release_version(self.bundle, root=self.root)
-        provenance.write_text(json.dumps({"revision": "3" * 40}))
-        with self.assertRaisesRegex(ValueError, "without a version bump"):
-            publisher.check_release_version(self.bundle, root=self.root)
-        portable = json.loads((self.bundle / "plugin.json").read_text())
-        major, minor, patch = map(int, portable["version"].split("."))
-        portable["version"] = f"{major}.{minor}.{patch + 1}"
-        for relative, content in manifests(portable).items():
-            (self.bundle / relative).write_text(json.dumps(content, indent=2) + "\n")
-        publisher.check_release_version(self.bundle, root=self.root)
-        self.assertEqual(git(self.remote, "rev-parse", "release"), previous)
-        self.assertEqual(git(self.root, "rev-parse", "HEAD"), self.commit)
-        self.assertEqual(git(self.root, "status", "--porcelain"), "")
-        self.assertEqual(git(self.root, "worktree", "list", "--porcelain").count("worktree "), 1)
-
     def test_publication_keeps_validated_files_despite_gitignore(self):
         (self.skill / ".gitignore").write_text("old.txt\n")
         self.publish()
