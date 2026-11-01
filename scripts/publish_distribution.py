@@ -30,6 +30,25 @@ def verify_staged_bundle(checkout, bundle):
         raise ValueError("Git staging changed the validated bundle; review Git attributes and file modes")
 
 
+def check_release_version(bundle, root=ROOT):
+    """Check PR bundles against release without publishing or requiring a main SHA."""
+    bundle = Path(bundle).resolve()
+    check_metadata(bundle)
+    if not git(root, "ls-remote", "--heads", "origin", "refs/heads/release"):
+        print("No previous release; the initial plugin version can be published")
+        return
+    git(root, "fetch", "origin", "refs/heads/release")
+    parent = git(root, "rev-parse", "FETCH_HEAD")
+    with tempfile.TemporaryDirectory(prefix="ops-version-check-") as temporary:
+        checkout = Path(temporary) / "release"
+        git(root, "worktree", "add", "--detach", str(checkout), parent)
+        try:
+            check_version_upgrade(checkout, bundle)
+        finally:
+            git(root, "worktree", "remove", "--force", str(checkout))
+    print("Plugin version is compatible with the published release")
+
+
 def publish(bundle, source_commit, root=ROOT):
     bundle = Path(bundle).resolve()
     reject_symlinks(bundle)
@@ -91,11 +110,18 @@ def publish(bundle, source_commit, root=ROOT):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("bundle", type=Path, help="Extracted, validated distribution")
-    parser.add_argument("--source-commit", required=True)
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--source-commit")
+    mode.add_argument("--check-version-only", action="store_true",
+                      help="Check compatibility with release without publishing")
     args = parser.parse_args()
+    action = "Version check" if args.check_version_only else "Publication"
     try:
-        publish(args.bundle, args.source_commit)
+        if args.check_version_only:
+            check_release_version(args.bundle)
+        else:
+            publish(args.bundle, args.source_commit)
     except subprocess.CalledProcessError as error:
-        parser.exit(1, f"Publication failed: {error}\n{error.stderr or ''}")
+        parser.exit(1, f"{action} failed: {error}\n{error.stderr or ''}")
     except (ValueError, OSError) as error:
-        parser.exit(1, f"Publication failed: {error}\n")
+        parser.exit(1, f"{action} failed: {error}\n")

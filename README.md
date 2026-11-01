@@ -277,7 +277,10 @@ These checks use a local Git remote and do not establish model behavior.
 Keep the plugin name stable. Our release policy uses numeric `MAJOR.MINOR.PATCH`
 versions in `packaging/plugin.json`, bumped when changing the distributed payload.
 The publisher rejects changes without a version bump and decreasing versions;
-source-only `SOURCE.json` changes are exempt. Publish shared rollbacks as a new,
+PR validation runs the same version check against the published `release` before
+merge. Upstream gitlink updates also change bundled `UPSTREAM.json` provenance
+and require a bump, even when the selected reference text is unchanged. Only root
+`SOURCE.json` changes are exempt. Publish shared rollbacks as a new,
 increasing version, as described in [Claude's update guidance](https://code.claude.com/docs/en/plugins/host-marketplace#release-a-new-version).
 
 After a successful `main` build, a separate job with `contents: write` publishes
