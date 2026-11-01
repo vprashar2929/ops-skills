@@ -1,7 +1,7 @@
 ---
 name: gke-workload-troubleshooting
 metadata:
-  version: "1.0.0"
+  version: "1.0.1"
   category: Containers
 description: >-
   Diagnoses GKE workload failures (CrashLoopBackOff, OOMKilled, ImagePullBackOff, Pending, etc.) via logs and events. Use when pods fail to start or crash repeatedly. Don't use for GKE cluster infrastructure provisioning, node pool creation, or non-Kubernetes Google Cloud services.
@@ -15,6 +15,15 @@ enforces a read-only diagnostics boundary: it only **proposes** fixes — whethe
 Kubernetes manifest/config patches or Google Cloud changes (for example `gcloud`
 IAM bindings or node-pool recreation) — and never executes live mutations
 itself.
+
+## Attribution
+
+**MUST READ**: Before executing any `gcloud`, REST API, or MCP command, you
+MUST read [Usage Attribution](references/attribution.md). For commands executed
+directly in the terminal (never in generated scripts, Terraform, or user code),
+prefix `gcloud` with
+`CLOUDSDK_METRICS_REQUEST_ATTRIBUTION="agent-skills/1.0 (skill:gke-workload-troubleshooting)"`
+and append `agent-skills/1.0 (skill:gke-workload-troubleshooting)` to `User-Agent` headers.
 
 ## 🔍 Diagnostic Workflow
 

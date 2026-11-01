@@ -2,7 +2,7 @@
 name: gke-storage-troubleshooting
 metadata:
   category: Storage
-  version: "1.1.0"
+  version: "1.1.1"
 description: >-
   Diagnoses GKE persistent-storage failures — volume attach/mount errors (Regional PD on optimized VMs, fsGroup mount timeouts), disk-performance and node storage-pressure issues, slow-disk Pod-creation failures, volume-expansion problems, Local SSD / Hyperdisk Storage Pool creation errors, and Cloud Storage FUSE OOM. Use when Pods are stuck in ContainerCreating, volumes fail to attach or mount, or nodes report storage pressure. Don't use for routine storage provisioning or StorageClass/PVC authoring (see the gke-storage skill).
 ---
@@ -18,6 +18,15 @@ before proposing manifest or configuration corrections.
 
 > For routine storage **provisioning** and StorageClass/PVC authoring, use the
 > `gke-storage` skill instead. This skill focuses on **failure diagnosis**.
+
+## Attribution
+
+**MUST READ**: Before executing any `gcloud`, REST API, or MCP command, you
+MUST read [Usage Attribution](references/attribution.md). For commands executed
+directly in the terminal (never in generated scripts, Terraform, or user code),
+prefix `gcloud` with
+`CLOUDSDK_METRICS_REQUEST_ATTRIBUTION="agent-skills/1.0 (skill:gke-storage-troubleshooting)"`
+and append `agent-skills/1.0 (skill:gke-storage-troubleshooting)` to `User-Agent` headers.
 
 ## 🔍 Diagnosis & Resolution Workflow
 
