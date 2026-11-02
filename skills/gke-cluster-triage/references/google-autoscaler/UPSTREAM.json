@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/google/skills",
-  "revision": "bb9b3f464aae37af360d079c1d863524955b0363",
+  "revision": "928940c02e9973dbf31322fb5463dff0a53e9d8e",
   "path": "skills/cloud/gke-cluster-autoscaler",
   "modified": false,
   "entrypoint_mapping": {
