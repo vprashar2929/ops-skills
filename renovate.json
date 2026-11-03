@@ -6,6 +6,12 @@
       "matchManagers": ["git-submodules", "github-actions"],
       "automerge": false,
       "schedule": ["before 6am on monday"]
+    },
+    {
+      "matchManagers": ["git-submodules"],
+      "semanticCommits": "enabled",
+      "semanticCommitType": "fix",
+      "semanticCommitScope": "deps"
     }
   ]
 }

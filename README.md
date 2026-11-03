@@ -274,26 +274,53 @@ CLIs, including skill discovery, installed bytes/permissions, packaged links and
 official installed-skill validation. Claude metadata is validated strictly.
 These checks use a local Git remote and do not establish model behavior.
 
-Keep the plugin name stable. Our release policy uses numeric `MAJOR.MINOR.PATCH`
-versions in `packaging/plugin.json`, bumped when changing the distributed payload.
-The publisher rejects changes without a version bump and decreasing versions;
-source-only `SOURCE.json` changes are exempt. Publish shared rollbacks as a new,
-increasing version, as described in [Claude's update guidance](https://code.claude.com/docs/en/plugins/host-marketplace#release-a-new-version).
+Keep the plugin name stable. Versions in `packaging/plugin.json` use numeric
+`MAJOR.MINOR.PATCH`. PRs and main builds validate and package; source and upstream
+changes can accumulate without modifying the published plugin.
 
-After a successful `main` build, a separate job with `contents: write` publishes
-that same validated artifact using [the publisher](scripts/publish_distribution.py).
-It verifies the clean source revision and staged Git file contents, skips superseded
-builds, and pushes without force. Git ignore rules cannot drop validated files;
-Git attribute transformations cause publication to fail rather than alter them.
+[Release Please](https://github.com/googleapis/release-please-action) prepares a
+release PR with the plugin version, manifest, and changelog updates. It keeps that
+PR current even when CI-only changes reach main. Review compatibility (including
+upstream instructions and licenses), then merge the release PR.
+
+Merging the release PR lets Release Please create the version tag and GitHub
+release. GitHub's [`release: published` event](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#release)
+runs the same validation on the tagged commit, then publishes that exact artifact
+to `release`. The publisher verifies the tag, plugin version and trusted-main
+ancestry, so later main changes cannot replace the approved snapshot.
+The GitHub release is visible before distribution finishes; if publication fails,
+rerun the failed release workflow. Retrying the same release leaves its published
+bytes and `SOURCE.json` untouched. Changed contents require a new, increasing
+version, including shared rollbacks. The required PR check remains named `validate`.
+
+Use Conventional Commits: `fix:` for patches, `feat:` for minor releases, and `!` or
+`BREAKING CHANGE:` for major releases, including before 1.0. Renovate uses `fix(deps)`
+only for upstream gitlinks; CI dependency chores alone do not request a release.
+The bootstrap manifest records published 0.1.4 and its source commit. Release Please's
+supported [`go` release type](https://github.com/googleapis/release-please/blob/v17.1.3/docs/customizing.md#strategy-language-types-supported)
+maintains the changelog; its JSON extra-file updater changes the plugin version.
+
+One-time prerequisite: an administrator must store `RELEASE_PLEASE_TOKEN` as a
+repository Actions secret before the bot can run. Use a fine-grained PAT limited to
+this repository with **Contents, Pull requests, and Issues: read and write**.
+Also grant **Workflows: write** so Release Please can release an approved commit
+after main's workflow files have changed, as required by
+[GitHub's release API](https://docs.github.com/en/rest/releases/releases#create-a-release).
+The PAT lets bot-created PRs and releases trigger Actions, as documented in the
+[action README](https://github.com/googleapis/release-please-action#other-actions-on-release-please-prs).
+PR validation retains read-only permissions. Only the main Release Please job uses
+the PAT. Distribution publication uses `GITHUB_TOKEN` with `contents: write`;
+repository policy must allow that token to push to `release`.
+
+The publisher verifies clean source provenance and staged Git file contents and pushes
+without force. Git ignore rules cannot drop validated files; Git attribute
+transformations cause publication to fail rather than alter them.
 Previous distribution commits remain available for fixed installs and rollback.
 Failed validation prevents publication; a rejected push leaves the previous release
-intact. If a job fails after pushing, check `release`'s `SOURCE.json` before retrying.
-Repository policy must allow the workflow token to push to `release`.
-
-Use the workflow's manual trigger on `main` to retry publication. After deploying
-the workflow, confirm that `release`'s `SOURCE.json` records the intended source
-commit before installing it. Local development uses the same packager and installs
-from `dist/bundle`; moving a checkout is not an installation update.
+intact. The workflow's manual trigger on `main` runs Release Please; publication
+retries use the original release workflow. Inspect `release`'s `SOURCE.json` for
+the last published source. Local development uses the same packager and installs
+from `dist/bundle`; moving a checkout is not an update.
 
 Vendor directory listings require separate submissions through
 [OpenAI](https://developers.openai.com/plugins/deploy/submission) and
