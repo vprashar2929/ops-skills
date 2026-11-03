@@ -1,0 +1,18 @@
+{
+  "bootstrap-sha": "790564198e8453f09c5c26d85a8fbfe632930a77",
+  "packages": {
+    ".": {
+      "release-type": "go",
+      "component": "ops-triage",
+      "include-component-in-tag": true,
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "packaging/plugin.json",
+          "jsonpath": "$.version"
+        }
+      ]
+    }
+  },
+  "always-update": true
+}

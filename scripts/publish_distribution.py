@@ -30,7 +30,7 @@ def verify_staged_bundle(checkout, bundle):
         raise ValueError("Git staging changed the validated bundle; review Git attributes and file modes")
 
 
-def publish(bundle, source_commit, root=ROOT):
+def publish(bundle, source_commit, release_tag, root=ROOT):
     bundle = Path(bundle).resolve()
     reject_symlinks(bundle)
     if any(p.name == ".git" for p in bundle.rglob("*")):
@@ -38,14 +38,16 @@ def publish(bundle, source_commit, root=ROOT):
     provenance = json.loads((bundle / "SOURCE.json").read_text())
     if provenance["commit"] != source_commit or provenance["dirty"] is not False:
         raise ValueError("Bundle must come from the expected clean source commit")
-    if (bundle / "plugin.json").is_file():
-        check_metadata(bundle)
-
-    # Only trusted main builds call this script. PR artifacts are never published.
+    check_metadata(bundle)
+    portable = json.loads((bundle / "plugin.json").read_text())
+    if release_tag != f"{portable['name']}-v{portable['version']}":
+        raise ValueError("Release tag does not match the plugin name and version")
+    if git(root, "rev-parse", f"refs/tags/{release_tag}^{{commit}}") != source_commit:
+        raise ValueError("Release tag does not match the validated source commit")
+    # The tagged release stays pinned even when later changes reach main.
     git(root, "fetch", "origin", "refs/heads/main")
-    if git(root, "rev-parse", "FETCH_HEAD") != source_commit:
-        print("Skipping publication: main has advanced beyond this build")
-        return None
+    if git(root, "merge-base", source_commit, "FETCH_HEAD") != source_commit:
+        raise ValueError("Release source is not an ancestor of trusted main")
     remote_release = git(root, "ls-remote", "--heads", "origin", "refs/heads/release")
     if remote_release:
         git(root, "fetch", "origin", "refs/heads/release")
@@ -60,6 +62,14 @@ def publish(bundle, source_commit, root=ROOT):
         try:
             if remote_release:
                 check_version_upgrade(checkout, bundle)
+                if (checkout / "plugin.json").is_file():
+                    old = json.loads((checkout / "plugin.json").read_text())
+                    if old["version"] == portable["version"]:
+                        published = json.loads((checkout / "SOURCE.json").read_text())
+                        if published["commit"] != source_commit:
+                            raise ValueError("Plugin version was already published from a different source")
+                        print(f"Plugin {portable['version']} already published; release unchanged")
+                        return parent
             if not remote_release:
                 git(checkout, "checkout", "--orphan", branch)
             git(checkout, "rm", "-r", "-f", "--ignore-unmatch", ".")
@@ -74,10 +84,6 @@ def publish(bundle, source_commit, root=ROOT):
                 "-c", "commit.gpgsign=false", "commit", "-m",
                 f"build: publish skills from {source_commit}")
             revision = git(checkout, "rev-parse", "HEAD")
-            git(root, "fetch", "origin", "refs/heads/main")
-            if git(root, "rev-parse", "FETCH_HEAD") != source_commit:
-                print("Skipping publication: main advanced during publication")
-                return None
             # No force push: a concurrent publisher must not overwrite a newer release.
             git(checkout, "push", "origin", "HEAD:refs/heads/release")
             print(f"Published distribution {revision} from {source_commit}")
@@ -92,9 +98,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("bundle", type=Path, help="Extracted, validated distribution")
     parser.add_argument("--source-commit", required=True)
+    parser.add_argument("--release-tag", required=True, help="Published plugin version tag")
     args = parser.parse_args()
     try:
-        publish(args.bundle, args.source_commit)
+        publish(args.bundle, args.source_commit, args.release_tag)
     except subprocess.CalledProcessError as error:
         parser.exit(1, f"Publication failed: {error}\n{error.stderr or ''}")
     except (ValueError, OSError) as error:
