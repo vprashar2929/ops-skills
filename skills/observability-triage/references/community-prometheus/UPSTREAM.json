@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/wshobson/agents",
-  "revision": "7e2fb559cf4b824b27f1fec49fe88f7511066d26",
+  "revision": "9c61ab243def98f72da12abd41cfcf5bcd91af9d",
   "path": "plugins/observability-monitoring/skills/prometheus-configuration",
   "modified": false,
   "entrypoint_mapping": {

@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/redis/agent-skills",
-  "revision": "a84871d065f398fed55e1633f66b66f731eb4e2b",
+  "revision": "74708dab4b3f81a9845803c3f642a4f7d443af69",
   "path": "skills/redis-connections",
   "modified": false,
   "entrypoint_mapping": {

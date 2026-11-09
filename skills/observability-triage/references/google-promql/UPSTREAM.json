@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/google/skills",
-  "revision": "928940c02e9973dbf31322fb5463dff0a53e9d8e",
+  "revision": "2194d3b8b1f31975fef2f1a0ae6b9ab55bd7ceee",
   "path": "skills/cloud/cloud-monitoring-promql-query",
   "modified": false,
   "entrypoint_mapping": {
