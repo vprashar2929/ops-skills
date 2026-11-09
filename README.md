@@ -312,6 +312,25 @@ PR validation retains read-only permissions. Only the main Release Please job us
 the PAT. Distribution publication uses `GITHUB_TOKEN` with `contents: write`;
 repository policy must allow that token to push to `release`.
 
+The main Release Please job also needs Python and the authenticated GitHub CLI
+(`gh`), provided by its GitHub-hosted runner and setup step. Release Please's PAT
+commits are unsigned. After each generated PR update,
+[`sign_release_pr.py`](scripts/sign_release_pr.py) recreates its single release
+commit using [GitHub's signing API](https://docs.github.com/en/graphql/reference/commits#createcommitonbranch).
+The helper requires a verified signature and identical file tree, commit message
+and parent before replacing the release branch with an atomic expected-head check.
+It handles only this repository's release branch and its three generated files;
+unexpected changes fail for review. Temporary signing branches are removed, and
+the signed update triggers fresh PR validation using the same PAT. No signing key
+secret or exception to the verified-signature requirement is needed.
+
+If signing fails, rerun the main release job after resolving the reported error.
+For a one-time repair with the same repository permissions and `gh` authentication:
+
+```bash
+python3 scripts/sign_release_pr.py --repository vprashar2929/ops-skills --pr <number>
+```
+
 The publisher verifies clean source provenance and staged Git file contents and pushes
 without force. Git ignore rules cannot drop validated files; Git attribute
 transformations cause publication to fail rather than alter them.
