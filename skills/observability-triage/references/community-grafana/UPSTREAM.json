@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/wshobson/agents",
-  "revision": "9c61ab243def98f72da12abd41cfcf5bcd91af9d",
+  "revision": "51b9ae3ac68d9c236549a9b57f5dca7e6c0c168c",
   "path": "plugins/observability-monitoring/skills/grafana-dashboards",
   "modified": false,
   "entrypoint_mapping": {
