@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.6](https://github.com/vprashar2929/ops-skills/compare/ops-triage-v0.1.5...ops-triage-v0.1.6) (2026-11-23)
+
+
+### Bug Fixes
+
+* **deps:** update upstream/wshobson-agents digest to 51b9ae3 ([623abec](https://github.com/vprashar2929/ops-skills/commit/623abec756430d3965ce985b6e00221a24575e40))
+* **deps:** update upstream/wshobson-agents digest to 51b9ae3 ([b594203](https://github.com/vprashar2929/ops-skills/commit/b5942034f027647f1ed73aa95248c2ec7a26b3ae))
+
 ## [0.1.5](https://github.com/vprashar2929/ops-skills/compare/ops-triage-v0.1.4...ops-triage-v0.1.5) (2026-11-09)
 
 
